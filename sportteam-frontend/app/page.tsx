@@ -21,15 +21,23 @@ export default function Home() {
             <p className="text-sm text-zinc-400">불러오는 중…</p>
         ) : user ? (
             <div className="flex flex-col items-center gap-4">
-              <p className="text-zinc-700">
-                <span className="font-semibold">{user.nickname}</span>님, 환영합니다.
-              </p>
-              <button
-                  onClick={() => void logout()}
-                  className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
-              >
-                로그아웃
-              </button>
+                <p className="text-zinc-700">
+                    <span className="font-semibold">{user.nickname}</span>님, 환영합니다.
+                </p>
+                <div className="flex gap-3">
+                    <Link
+                        href="/mypage"
+                        className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                        마이페이지
+                    </Link>
+                    <button
+                        onClick={() => void logout()}
+                        className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                    >
+                        로그아웃
+                    </button>
+                </div>
             </div>
         ) : (
             <div className="flex gap-3">
