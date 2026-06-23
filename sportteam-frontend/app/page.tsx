@@ -26,8 +26,14 @@ export default function Home() {
                     </p>
                     <div className="flex gap-3">
                         <Link
-                            href="/facilities"
+                            href="/matches"
                             className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                        >
+                            매치 찾기
+                        </Link>
+                        <Link
+                            href="/facilities"
+                            className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                         >
                             시설 찾기
                         </Link>
@@ -48,8 +54,14 @@ export default function Home() {
             ) : (
                 <div className="flex gap-3">
                     <Link
-                        href="/facilities"
+                        href="/matches"
                         className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                        매치 찾기
+                    </Link>
+                    <Link
+                        href="/facilities"
+                        className="rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
                     >
                         시설 찾기
                     </Link>
