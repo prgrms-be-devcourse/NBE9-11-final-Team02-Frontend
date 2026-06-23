@@ -194,3 +194,68 @@ export interface MatchPaymentResponse {
     hostDetail: MatchPaymentHostDetail | null;
     participantDetail: MatchPaymentParticipantDetail | null;
 }
+
+// ---- match ----
+
+export type MatchStatus = "RECRUITING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
+
+export type SkillLevel =
+    | "ANY"
+    | "LEVEL_1"
+    | "LEVEL_2"
+    | "LEVEL_3"
+    | "LEVEL_4"
+    | "LEVEL_5";
+
+export type RequiredGender = "ANY" | "MALE" | "FEMALE" | "MIXED";
+
+export type MatchParticipantStatus = "ACTIVE" | "CANCELLED";
+
+export type MatchSortType =
+    | "LATEST"
+    | "DEADLINE_ASC"
+    | "FEE_ASC"
+    | "PARTICIPANT_DESC";
+
+export interface MatchSummaryResponse {
+    matchId: string;
+    title: string;
+    sportType: SportType;
+    currentCount: number;
+    capacity: number;
+    feePerPerson: number;
+    minSkillLevel: SkillLevel;
+    maxSkillLevel: SkillLevel;
+    requiredGender: RequiredGender;
+    recruitDeadline: string;
+    status: MatchStatus;
+}
+
+export interface MatchDetailResponse {
+    matchId: string;
+    reservationId: string;
+    hostId: string;
+    title: string;
+    sportType: SportType;
+    capacity: number;
+    currentCount: number;
+    feePerPerson: number;
+    minSkillLevel: SkillLevel;
+    maxSkillLevel: SkillLevel;
+    requiredGender: RequiredGender;
+    recruitDeadline: string;
+    cancelDeadline: string | null;
+    confirmedAt: string | null;
+    cancelledAt: string | null;
+    status: MatchStatus;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MatchParticipantResponse {
+    participantId: string;
+    userId: string;
+    role: MatchParticipantRole;
+    status: MatchParticipantStatus;
+    joinedAt: string;
+}
