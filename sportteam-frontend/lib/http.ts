@@ -2,7 +2,7 @@ import type { ApiResponse } from "./types";
 import { getAccessToken } from "./token";
 
 export const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8090";
 
 /** 백엔드 error 응답을 그대로 담는 에러 */
 export class ApiError extends Error {
