@@ -83,3 +83,68 @@ export interface UserProfileUpdateResponse {
     preferredSport: string | null;
     profileImg: string | null;
 }
+
+// ---- facility ----
+
+export type SportType =
+    | "FUTSAL"
+    | "SOCCER"
+    | "BASKETBALL"
+    | "TENNIS"
+    | "BADMINTON";
+
+export type FacilityStatus = "ACTIVE" | "CLOSED";
+
+export type Amenity = "PARKING" | "SHOWER" | "LOCKER" | "EQUIPMENT_RENTAL";
+
+export type SlotStatus = "AVAILABLE" | "RESERVED" | "BLOCKED";
+
+/** Spring Data Page<T> 응답과 매칭 */
+export interface PageResponse<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+    first: boolean;
+    last: boolean;
+}
+
+export interface FacilityAvailableResponse {
+    facilityId: string;
+    name: string;
+    address: string;
+    defaultWeekdayPrice: number;
+    defaultWeekendPrice: number;
+    sportTypes: SportType[];
+    thumbnailUrl: string | null;
+    ratingAvg: number;
+    reviewCount: number;
+}
+
+export interface FacilityResponse {
+    id: string;
+    name: string;
+    address: string;
+    phone: string;
+    description: string;
+    capacity: number;
+    slotDurationMinutes: number;
+    defaultWeekdayPrice: number;
+    defaultWeekendPrice: number;
+    slotOpenAt: string;
+    status: FacilityStatus;
+    sportTypes: SportType[];
+    amenities: Amenity[];
+    imageUrls: string[];
+    createdAt: string;
+}
+
+export interface FacilitySlotResponse {
+    id: string;
+    slotDate: string;
+    startTime: string;
+    endTime: string;
+    price: number;
+    status: SlotStatus;
+}
