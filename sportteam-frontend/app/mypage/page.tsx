@@ -105,9 +105,17 @@ function ProfileView({
                 />
             </dl>
 
-            <Button type="button" onClick={onEdit}>
-                프로필 수정
-            </Button>
+            <div className="flex gap-3">
+                <Button type="button" onClick={onEdit}>
+                    프로필 수정
+                </Button>
+                <Link
+                    href="/mypage/matches"
+                    className="inline-flex w-full items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+                >
+                    내 매치 목록
+                </Link>
+            </div>
         </div>
     );
 }
