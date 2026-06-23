@@ -148,3 +148,49 @@ export interface FacilitySlotResponse {
     price: number;
     status: SlotStatus;
 }
+
+// ---- mypage / matches ----
+
+export type MatchParticipantRole = "HOST" | "PARTICIPANT";
+
+export type MyMatchStatus = "PARTICIPATING" | "COMPLETED" | "CANCELLED";
+
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+
+export type SettlementStatus = "HOLDING" | "SETTLED" | "FAILED";
+
+export interface MyMatchResponse {
+    matchId: string;
+    title: string;
+    sportType: SportType;
+    myMatchStatus: MyMatchStatus;
+    role: MatchParticipantRole;
+    matchDate: string;
+    startTime: string;
+    endTime: string;
+}
+
+export interface MatchPaymentHostDetail {
+    facilityPaymentAmount: number;
+    facilityPaymentStatus: PaymentStatus;
+    paidAt: string | null;
+    refundedAt: string | null;
+    refundReason: string | null;
+    hostSettlementAmount: number | null;
+    platformFee: number | null;
+    settlementStatus: SettlementStatus | null;
+}
+
+export interface MatchPaymentParticipantDetail {
+    amount: number;
+    status: PaymentStatus;
+    paidAt: string | null;
+    refundedAt: string | null;
+    refundReason: string | null;
+}
+
+export interface MatchPaymentResponse {
+    role: "HOST" | "PARTICIPANT";
+    hostDetail: MatchPaymentHostDetail | null;
+    participantDetail: MatchPaymentParticipantDetail | null;
+}
