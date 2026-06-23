@@ -7,6 +7,8 @@ import type {
     SignupResponse,
     TokenRefreshResponse,
     UserProfile,
+    UserProfileUpdateRequest,
+    UserProfileUpdateResponse,
 } from "./types";
 
 /** 회원가입 */
@@ -48,4 +50,15 @@ export async function logout(): Promise<void> {
 /** 내 프로필 조회 */
 export function getMyProfile(): Promise<UserProfile> {
     return apiFetch<UserProfile>("/api/v1/users/me", { auth: true });
+}
+
+/** 내 프로필 수정 (부분 수정) */
+export function updateMyProfile(
+    request: UserProfileUpdateRequest,
+): Promise<UserProfileUpdateResponse> {
+    return apiFetch<UserProfileUpdateResponse>("/api/v1/users/me", {
+        method: "PATCH",
+        body: request,
+        auth: true,
+    });
 }

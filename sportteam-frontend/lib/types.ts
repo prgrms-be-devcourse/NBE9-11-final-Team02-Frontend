@@ -65,3 +65,21 @@ export interface UserProfile {
     mannerScore: number | null;
     skillScore: number | null;
 }
+
+/** 프로필 수정 요청 — 모든 필드 선택적(부분 수정) */
+export interface UserProfileUpdateRequest {
+    nickname?: string;
+    position?: string;
+    activeRegion?: string;
+    preferredSport?: string;
+    profileImg?: string;
+}
+
+export interface UserProfileUpdateResponse {
+    userId: string;
+    nickname: string | null;
+    position: string | null;
+    activeRegion: string | null;
+    preferredSport: string | null;
+    profileImg: string | null;
+}
