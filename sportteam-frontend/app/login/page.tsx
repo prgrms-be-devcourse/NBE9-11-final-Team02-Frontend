@@ -1,7 +1,0 @@
-import Link from "next/link";
-import { AuthForm } from "@/components/auth-form";
-
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const { next } = await searchParams;
-  return <main className="auth-page"><section className="auth-brand"><Link className="brand" href="/"><svg viewBox="0 0 38 38"><path d="M7 4h15a9 9 0 0 1 0 18H14v12H7V4Z"/><circle cx="22" cy="13" r="3"/></svg><span>PLAYON</span></Link><div><span>PLAY TOGETHER</span><h1>혼자보다<br/>함께일 때 더 즐거우니까.</h1><p>오늘의 운동 메이트를 플레이온에서 만나보세요.</p></div></section><section className="auth-panel"><div><Link className="back-home" href="/">← 홈으로</Link><span className="eyebrow">WELCOME BACK</span><h2>다시 만나서 반가워요!</h2><p>계정에 로그인하고 새로운 매치를 확인하세요.</p><AuthForm mode="login" redirectTo={next}/></div></section></main>;
-}
