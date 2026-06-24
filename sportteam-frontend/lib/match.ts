@@ -1,6 +1,8 @@
 import { apiFetch } from "./http";
 import type {
     MatchDetailResponse,
+    MatchCreateRequest,
+    MatchCreateResponse,
     MatchParticipantResponse,
     MatchSortType,
     MatchStatus,
@@ -10,6 +12,15 @@ import type {
     SkillLevel,
     SportType,
 } from "./types";
+
+/** 시설 슬롯을 홀드하고 새 매치를 생성 */
+export function createMatch(request: MatchCreateRequest): Promise<MatchCreateResponse> {
+    return apiFetch<MatchCreateResponse>("/api/v1/matches", {
+        method: "POST",
+        body: request,
+        auth: true,
+    });
+}
 
 export interface GetMatchesParams {
     sportType?: SportType;

@@ -1,0 +1,11 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { getMyRecords } from "@/lib/user-service";
+import type { MyRecordResponse, SportType } from "@/lib/types";
+
+const LABEL:Record<SportType,string>={FUTSAL:"풋살",SOCCER:"축구",BASKETBALL:"농구",TENNIS:"테니스",BADMINTON:"배드민턴"};
+export default function RecordsPage(){const[data,setData]=useState<MyRecordResponse>();const[error,setError]=useState<string>();useEffect(()=>{let active=true;getMyRecords().then(v=>{if(active)setData(v)}).catch(e=>{if(active)setError(e instanceof Error?e.message:"기록을 불러오지 못했습니다.")});return()=>{active=false}},[]);if(error)return <State text={error}/>;if(!data)return <State text="운동 기록을 불러오고 있어요."/>;const max=Math.max(1,...data.sportStats.map(v=>v.count));return <main className="flow-page"><div className="flow-shell records-shell"><Link href="/mypage" className="flow-back">← 마이페이지</Link><div className="flow-heading"><span>MY RECORDS</span><h1>나의 플레이 기록</h1><p>지금까지 함께한 경기와 종목별 실력을 확인하세요.</p></div><div className="record-summary"><Card label="전체 경기" value={data.totalMatchCount}/><Card label="직접 만든 경기" value={data.hostedMatchCount}/><Card label="참가한 경기" value={data.participatedMatchCount}/></div><section className="record-panel"><h2>종목별 경기</h2>{data.sportStats.length?data.sportStats.map(stat=><div className="record-bar" key={stat.sportType}><span>{LABEL[stat.sportType]}</span><i><em style={{width:`${stat.count/max*100}%`}}/></i><b>{stat.count}회</b></div>):<p className="record-empty">아직 완료한 경기가 없습니다.</p>}</section><section className="record-panel"><h2>나의 평가</h2><div className="score-cards"><div><span>매너 점수</span><strong>{Number(data.mannerStat.mannerScore).toFixed(1)}</strong><small>{data.mannerStat.mannerReviewCount}개 리뷰</small></div>{data.skillStats.map(stat=><div key={stat.sportType}><span>{LABEL[stat.sportType]} 실력</span><strong>{Number(stat.skillRating).toFixed(1)}</strong><small>{stat.reviewCount}개 리뷰</small></div>)}</div></section></div></main>}
+function Card({label,value}:{label:string;value:number}){return <div><span>{label}</span><strong>{value}</strong><small>경기</small></div>}
+function State({text}:{text:string}){return <main className="auth-loading"><span className="auth-spinner"/><p>{text}</p></main>}
