@@ -1,14 +1,4 @@
-# PLAYON Frontend
-
-스포츠 시설 예약과 팀 매칭 서비스 PLAYON의 Next.js 프론트엔드입니다.
-
-```bash
-cp .env.example .env.local
-npm install
-npm run dev
-```
-
-기본 백엔드 주소는 `http://localhost:8080`입니다. 백엔드가 실행 중이지 않으면 화면 검토를 위한 샘플 데이터가 표시됩니다.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
