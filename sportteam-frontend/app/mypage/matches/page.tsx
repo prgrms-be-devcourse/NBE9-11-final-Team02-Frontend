@@ -270,6 +270,9 @@ function MatchCard({
             </button>
 
             {expanded ? <MatchPaymentDetail matchId={match.matchId} /> : null}
+            {match.myMatchStatus === "COMPLETED" ? (
+                <Link href={`/matches/${match.matchId}/review`} className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100">리뷰 작성하기</Link>
+            ) : null}
         </div>
     );
 }

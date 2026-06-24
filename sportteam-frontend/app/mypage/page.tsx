@@ -64,6 +64,12 @@ export default function MyPage() {
                         <ProfileView user={user} onEdit={() => setEditing(true)} />
                     )}
                 </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                    <Link href="/mypage/sports" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">종목별 실력 <span className="mt-1 block text-xs font-normal text-zinc-400">등록·조회하기</span></Link>
+                    <Link href="/mypage/matches" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">내 매치 <span className="mt-1 block text-xs font-normal text-zinc-400">참가·결제 내역</span></Link>
+                    <Link href="/mypage/records" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">플레이 기록 <span className="mt-1 block text-xs font-normal text-zinc-400">경기·평가 통계</span></Link>
+                    <Link href="/notifications" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">알림 <span className="mt-1 block text-xs font-normal text-zinc-400">진행 상황 확인</span></Link>
+                </div>
             </div>
         </main>
     );

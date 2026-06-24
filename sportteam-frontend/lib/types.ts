@@ -259,3 +259,71 @@ export interface MatchParticipantResponse {
     status: MatchParticipantStatus;
     joinedAt: string;
 }
+
+export interface MatchCreateRequest {
+    reservationId: string;
+    title: string;
+    sportType: SportType;
+    capacity: number;
+    feePerPerson: number;
+    minSkillLevel: SkillLevel;
+    maxSkillLevel: SkillLevel;
+    requiredGender: RequiredGender;
+    recruitDeadline: string;
+    cancelDeadline: string;
+}
+
+export type MatchCreateResponse = MatchDetailResponse;
+
+export interface WaitingQueueTokenResponse {
+    token: string;
+    facilitySlotId: string;
+    position: number;
+    waitingCount: number;
+    enterable: boolean;
+    expiresAt: string;
+}
+
+export interface PaymentPrepareResponse {
+    merchantUid: string;
+    amount: number;
+}
+
+export type SelfReportedLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+export interface SportStatResponse {
+    sportType: SportType;
+    registered: boolean;
+    selfReportedLevel: SelfReportedLevel | null;
+}
+
+export interface SportStatRegisterResponse {
+    stats: Array<{ sportType: SportType; skillRating: number }>;
+}
+
+export interface MyRecordResponse {
+    totalMatchCount: number;
+    hostedMatchCount: number;
+    participatedMatchCount: number;
+    sportStats: Array<{ sportType: SportType; count: number }>;
+    monthlyStats: Array<{ year: number; month: number; count: number }>;
+    mannerStat: { mannerScore: number; mannerReviewCount: number };
+    skillStats: Array<{ sportType: SportType; position?: string | null; skillRating: number; reviewCount: number }>;
+}
+
+export interface NotificationResponse {
+    notificationId: string;
+    type: string;
+    title: string;
+    content: string;
+    referenceId: string | null;
+    status: string;
+    read: boolean;
+    createdAt: string;
+    readAt: string | null;
+}
+
+export interface ReviewSubmitRequest {
+    facilityReview: { rating: number; comment: string } | null;
+    participantReviews: Array<{ revieweeId: string; mannerRating: number; skillRating: number }>;
+}
