@@ -149,6 +149,39 @@ export interface FacilitySlotResponse {
     status: SlotStatus;
 }
 
+export interface FacilitySummaryResponse {
+    id: string;
+    thumbnailUrl: string | null;
+    name: string;
+    address: string;
+    status: FacilityStatus;
+    sportTypes: SportType[];
+}
+
+export interface FacilityCreateRequest {
+    name: string;
+    address: string;
+    phone: string;
+    description: string;
+    capacity: number;
+    slotDurationMinutes: number;
+    defaultWeekdayPrice: number;
+    defaultWeekendPrice: number;
+    slotOpenAt: string | null;
+    sportTypes: SportType[];
+    amenities: Amenity[];
+    imageUrls: string[];
+}
+
+export interface SlotSetupRequest {
+    fromDate: string;
+    toDate: string;
+    startTime: string;
+    endTime: string;
+    weekdayPrice: number;
+    weekendPrice: number;
+}
+
 // ---- mypage / matches ----
 
 export type MatchParticipantRole = "HOST" | "PARTICIPANT";
