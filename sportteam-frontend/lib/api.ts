@@ -1,4 +1,4 @@
-import type { ApiResponse, FacilitySummary, MatchDetail, MatchParticipant, MatchSummary, Page } from "./types";
+import type { ApiResponse, FacilitySummary, MatchSummary, Page } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -21,19 +21,6 @@ export async function getMatches(params: Record<string, string | undefined> = {}
 export async function getAvailableFacilities(params: Record<string, string | undefined> = {}) {
   const data = await apiGet<Page<FacilitySummary>>(`/api/v1/facilities/available?${query(params)}`);
   return data?.content?.length ? data.content : fallbackFacilities;
-}
-
-export async function getMatch(matchId: string) {
-  const data = await apiGet<MatchDetail>(`/api/v1/matches/${matchId}`);
-  if (data) return data;
-  const summary = fallbackMatches.find((match) => match.matchId === matchId) ?? fallbackMatches[0];
-  return { ...summary, matchId, reservationId: "예약 정보 연동 예정", hostId: "demo-host", cancelDeadline: summary.recruitDeadline, confirmedAt: null, cancelledAt: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } satisfies MatchDetail;
-}
-
-export async function getMatchParticipants(matchId: string) {
-  const data = await apiGet<MatchParticipant[]>(`/api/v1/matches/${matchId}/participants`);
-  if (data) return data;
-  return Array.from({ length: Math.min(3, fallbackMatches.find((match) => match.matchId === matchId)?.currentCount ?? 3) }, (_, index) => ({ participantId: `demo-participant-${index}`, userId: `player-${index + 1}`, role: index === 0 ? "HOST" as const : "PARTICIPANT" as const, status: "JOINED", joinedAt: new Date().toISOString() }));
 }
 
 const future = (days: number, hour: number) => { const date = new Date(); date.setDate(date.getDate() + days); date.setHours(hour, 0, 0, 0); return date.toISOString(); };
