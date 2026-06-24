@@ -8,7 +8,7 @@ npm install
 npm run dev
 ```
 
-기본 백엔드 주소는 `http://localhost:8080`입니다. 백엔드가 실행 중이지 않으면 화면 검토를 위한 샘플 데이터가 표시됩니다.
+기본 백엔드 주소는 `http://localhost:8090`입니다. 브라우저 요청은 Next.js의 `/backend` 프록시를 통해 전달되어 별도 CORS 설정 없이 연동됩니다. 백엔드가 실행 중이지 않으면 메인 화면에는 검토용 샘플 데이터가 표시됩니다.
 
 ## Getting Started
 

@@ -1,6 +1,6 @@
 import type { ApiResponse, FacilityAvailableResponse, MatchSummaryResponse, PageResponse } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_URL = process.env.BACKEND_API_URL ?? "http://localhost:8090";
 
 async function apiGet<T>(path: string): Promise<T | null> {
   try {
