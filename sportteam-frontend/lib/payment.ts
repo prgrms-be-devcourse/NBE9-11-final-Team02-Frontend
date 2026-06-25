@@ -6,14 +6,10 @@ import type {
     WaitingQueueTokenResponse,
 } from "./types";
 
-interface UserHeaderInput {
-    userId: string;
-}
-
-export function issueQueueToken(facilitySlotId: string, userId: string) {
+export function issueQueueToken(facilitySlotId: string) {
     return apiFetch<WaitingQueueTokenResponse>(
         `/api/v1/queue/facility-slots/${facilitySlotId}/tokens`,
-        { method: "POST", auth: true, headers: { "X-USER-ID": userId } },
+        { method: "POST", auth: true },
     );
 }
 
@@ -23,25 +19,30 @@ export function getQueueStatus(token: string) {
     });
 }
 
-export function prepareParticipationPayment(input: UserHeaderInput & {
+export function consumeQueueToken(token: string) {
+    return apiFetch<void>(`/api/v1/queue/tokens/${token}/consume`, {
+        method: "POST",
+        auth: true,
+    });
+}
+
+export function prepareParticipationPayment(input: {
     matchId: string;
     amount: number;
 }) {
     return preparePayment({
-        userId: input.userId,
         matchId: input.matchId,
         amount: input.amount,
         paymentType: "PARTICIPATION",
     });
 }
 
-export function prepareFacilityPayment(input: UserHeaderInput & {
+export function prepareFacilityPayment(input: {
     facilitySlotId: string;
     amount: number;
     queueToken?: string;
 }) {
     return preparePayment({
-        userId: input.userId,
         facilitySlotId: input.facilitySlotId,
         amount: input.amount,
         paymentType: "FACILITY",
@@ -49,7 +50,7 @@ export function prepareFacilityPayment(input: UserHeaderInput & {
     });
 }
 
-function preparePayment(input: UserHeaderInput & {
+function preparePayment(input: {
     matchId?: string;
     facilitySlotId?: string;
     amount: number;
@@ -63,7 +64,6 @@ function preparePayment(input: UserHeaderInput & {
     return apiFetch<PaymentPrepareResponse>(`/api/v1/payments/prepare${query}`, {
         method: "POST",
         auth: true,
-        headers: { "X-USER-ID": input.userId },
         body: {
             matchId: input.matchId ?? null,
             facilitySlotId: input.facilitySlotId ?? null,
@@ -73,7 +73,7 @@ function preparePayment(input: UserHeaderInput & {
     });
 }
 
-export function confirmPayment(input: UserHeaderInput & {
+export function confirmPayment(input: {
     paymentKey: string;
     orderId: string;
     amount: number;
@@ -81,7 +81,6 @@ export function confirmPayment(input: UserHeaderInput & {
     return apiFetch<PaymentConfirmResponse>("/api/v1/payments/confirm", {
         method: "POST",
         auth: true,
-        headers: { "X-USER-ID": input.userId },
         body: {
             paymentKey: input.paymentKey,
             orderId: input.orderId,
