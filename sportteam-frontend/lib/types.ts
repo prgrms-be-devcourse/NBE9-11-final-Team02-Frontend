@@ -218,6 +218,7 @@ export type MatchParticipantRole = "HOST" | "PARTICIPANT";
 export type MyMatchStatus = "PARTICIPATING" | "COMPLETED" | "CANCELLED";
 
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+export type PaymentType = "PARTICIPATION" | "FACILITY";
 
 export type SettlementStatus = "HOLDING" | "SETTLED" | "FAILED";
 
@@ -353,6 +354,14 @@ export interface PaymentPrepareResponse {
     amount: number;
 }
 
+export interface PaymentConfirmResponse {
+    merchantUid: string;
+    paymentKey: string;
+    amount: number;
+    status: PaymentStatus;
+    approvedAt: string | null;
+}
+
 export type SelfReportedLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 
 export interface SportStatResponse {
@@ -390,4 +399,24 @@ export interface NotificationResponse {
 export interface ReviewSubmitRequest {
     facilityReview: { rating: number; comment: string } | null;
     participantReviews: Array<{ revieweeId: string; mannerRating: number; skillRating: number }>;
+}
+
+export interface AdminUserResponse {
+    userId: string;
+    email: string;
+    nickname: string;
+    role: UserRole;
+    provider: AuthProvider | null;
+    activeRegion: string | null;
+    mannerScore: number | null;
+    skillScore: number | null;
+    mannerReviewCount: number;
+    restricted: boolean;
+    restrictionReason: string | null;
+    restrictedAt: string | null;
+    createdAt: string;
+}
+
+export interface HealthResponse {
+    status: string;
 }
