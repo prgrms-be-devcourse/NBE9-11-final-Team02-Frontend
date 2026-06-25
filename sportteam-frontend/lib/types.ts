@@ -183,6 +183,11 @@ export interface SlotSetupRequest {
     weekendPrice: number;
 }
 
+export interface SlotUpdateRequest {
+    price: number;
+    status: Extract<SlotStatus, "AVAILABLE" | "CLOSED">;
+}
+
 export interface FacilityReservationSlotResponse {
     slotId: string;
     slotDate: string;
