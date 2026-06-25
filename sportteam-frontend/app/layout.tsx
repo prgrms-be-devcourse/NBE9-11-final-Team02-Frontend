@@ -1,7 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
+import { AuthProvider } from "@/lib/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,22 +15,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SportTeam",
-  description: "스포츠 시설 예약과 팀 매칭 플랫폼 SportTeam",
+  description: "스포츠 시설 예약 및 매칭 플랫폼",
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-    >
-      <body>
-        <AuthProvider>{children}</AuthProvider>
+      <html
+          lang="ko"
+          className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      >
+      <body className="min-h-full flex flex-col">
+      <AuthProvider>{children}</AuthProvider>
       </body>
-    </html>
+      </html>
   );
 }
