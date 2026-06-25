@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/http";
 import {
     calculateParticipantCancelDeadline,
     calculateRecruitDeadline,
+    formatPolicyDateTime,
     parseSlotStartAt,
     toDateTimeLocalValue,
 } from "@/lib/match-policy";
@@ -39,10 +40,27 @@ function MatchCreateForm() {
     const recruitDeadline = useMemo(() => matchStartAt ? calculateRecruitDeadline(matchStartAt) : null, [matchStartAt]);
     const cancelDeadline = useMemo(() => matchStartAt ? calculateParticipantCancelDeadline(matchStartAt) : null, [matchStartAt]);
 
+    function getDeadlineError() {
+        const now = Date.now();
+        if (!matchStartAt || !recruitDeadline || !cancelDeadline) return "경기 시간 정보를 확인할 수 없습니다.";
+        if (cancelDeadline.getTime() <= now) {
+            return `이 시간은 경기 시작 24시간 전 취소 마감(${formatPolicyDateTime(cancelDeadline)})이 이미 지나 매치를 만들 수 없습니다. 24시간 이후 슬롯을 선택해주세요.`;
+        }
+        if (recruitDeadline.getTime() <= now) {
+            return `이 시간은 모집 마감(${formatPolicyDateTime(recruitDeadline)})이 이미 지나 매치를 만들 수 없습니다.`;
+        }
+        return undefined;
+    }
+
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault(); setError(undefined); setSubmitting(true);
         const data = new FormData(event.currentTarget);
         try {
+            const deadlineError = getDeadlineError();
+            if (deadlineError) {
+                setError(deadlineError);
+                return;
+            }
             const match = await createMatch({
                 reservationId,
                 title: String(data.get("title")),
