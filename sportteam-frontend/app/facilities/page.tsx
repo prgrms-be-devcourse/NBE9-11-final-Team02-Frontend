@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Button, Select } from "@/components/ui";
+import { Select } from "@/components/ui";
 import { getAvailableFacilities } from "@/lib/facility";
 import { ApiError } from "@/lib/http";
 import type { FacilityAvailableResponse, PageResponse, SportType } from "@/lib/types";
@@ -23,6 +24,7 @@ export default function FacilitiesPage() {
     const [date, setDate] = useState("");
 
     const [page, setPage] = useState(0);
+    const [reloadKey, setReloadKey] = useState(0);
     const [data, setData] = useState<PageResponse<FacilityAvailableResponse>>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>();
@@ -59,28 +61,31 @@ export default function FacilitiesPage() {
         return () => {
             active = false;
         };
-    }, [sportType, region, date, page]);
+    }, [sportType, region, date, page, reloadKey]);
 
-    function handleSearch(e: React.FormEvent) {
+function handleSearch(e: React.FormEvent) {
         e.preventDefault();
         setPage(0);
     }
 
     return (
-        <main className="flex flex-1 flex-col items-center bg-zinc-50 px-4 py-12">
-            <div className="w-full max-w-4xl">
-                <h1 className="mb-6 text-2xl font-bold tracking-tight text-zinc-900">
-                    시설 찾기
-                </h1>
+        <main className="listing-page">
+            <section className="listing-hero facility-listing-hero">
+                <div className="container">
+                    <span className="eyebrow coral"><i /> FACILITY</span>
+                    <h1>우리 팀에 맞는<br /><strong>경기장 찾기</strong></h1>
+                    <p>종목, 지역, 날짜를 기준으로 예약 가능한 경기장을 확인하세요.</p>
+                </div>
+            </section>
 
+            <section className="listing-content">
+                <div className="container">
                 <form
                     onSubmit={handleSearch}
-                    className="mb-8 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end"
+                    className="filter-bar facility-filter"
                 >
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            종목
-                        </label>
+                    <label>
+                        <span>종목</span>
                         <Select
                             value={sportType}
                             onChange={(e) => setSportType(e.target.value as SportType | "")}
@@ -92,45 +97,48 @@ export default function FacilitiesPage() {
                                 </option>
                             ))}
                         </Select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            지역
-                        </label>
+                    </label>
+                    <label>
+                        <span>지역</span>
                         <input
                             value={region}
                             onChange={(e) => setRegion(e.target.value)}
                             placeholder="예: 서울 강남구"
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
                         />
-                    </div>
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            날짜
-                        </label>
+                    </label>
+                    <label>
+                        <span>날짜</span>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
                         />
-                    </div>
-                    <Button type="submit" className="sm:w-32">
-                        검색
-                    </Button>
+                    </label>
+                    <button type="submit">검색</button>
                 </form>
 
                 {loading ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">불러오는 중…</p>
+                    <div className="auth-loading"><span className="auth-spinner" /></div>
                 ) : error ? (
-                    <p className="py-12 text-center text-sm text-red-600">{error}</p>
-                ) : !data || data.content.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">
-                        검색 결과가 없습니다.
-                    </p>
+                    <div className="manager-empty">
+                        <span>!</span>
+                        <h2>경기장 목록을 불러오지 못했습니다.</h2>
+                        <p>{error}</p>
+                        <button type="button" onClick={() => setReloadKey((value) => value + 1)}>다시 시도</button>
+                    </div>
+                ) : !data || !data.content || data.content.length === 0 ? (
+                    <div className="manager-empty">
+                        <span>⌕</span>
+                        <h2>검색 결과가 없습니다.</h2>
+                        <p>필터를 바꾸거나 날짜를 비우고 다시 조회해보세요.</p>
+                    </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="list-meta">
+                            <h2>경기장 전체보기</h2>
+                            <span>{data.totalElements ?? data.content.length}개의 경기장</span>
+                        </div>
+                        <div className="facility-list-grid">
                             {data.content.map((facility) => (
                                 <FacilityCard key={facility.facilityId} facility={facility} />
                             ))}
@@ -143,50 +151,50 @@ export default function FacilitiesPage() {
                         />
                     </>
                 )}
-            </div>
+                </div>
+            </section>
         </main>
     );
 }
 
 function FacilityCard({ facility }: { facility: FacilityAvailableResponse }) {
+    const sports = Array.isArray(facility.sportTypes) ? facility.sportTypes : [];
+    const weekdayPrice = Number(facility.defaultWeekdayPrice ?? 0);
+    const weekendPrice = Number(facility.defaultWeekendPrice ?? 0);
+    const rating = Number(facility.ratingAvg ?? 0);
+    const reviewCount = Number(facility.reviewCount ?? 0);
+
     return (
         <Link
             href={`/facilities/${facility.facilityId}`}
-            className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+            className="facility-list-card"
         >
-            <div className="aspect-video w-full overflow-hidden rounded-lg bg-zinc-100">
+            <div className="facility-list-art">
                 {facility.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                         src={facility.thumbnailUrl}
-                        alt={facility.name}
-                        className="h-full w-full object-cover"
+                        alt={facility.name || "경기장 이미지"}
+                        fill
+                        sizes="(max-width: 720px) 100vw, 33vw"
+                        unoptimized
                     />
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-zinc-400">
-                        이미지 없음
-                    </div>
+                    <span>PLAYON</span>
                 )}
+                <em>★ {rating.toFixed(1)}</em>
             </div>
-            <h2 className="font-semibold text-zinc-900">{facility.name}</h2>
-            <p className="text-sm text-zinc-500">{facility.address}</p>
-            <div className="flex flex-wrap gap-1.5">
-                {facility.sportTypes.map((sport) => (
-                    <span
-                        key={sport}
-                        className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600"
-                    >
-            {SPORT_TYPE_LABEL[sport]}
-          </span>
-                ))}
-            </div>
-            <div className="mt-1 flex items-center justify-between text-sm">
-        <span className="font-semibold text-zinc-900">
-          평일 {facility.defaultWeekdayPrice.toLocaleString()}원
-        </span>
-                <span className="text-zinc-500">
-          ★ {facility.ratingAvg.toFixed(1)} ({facility.reviewCount})
-        </span>
+            <div className="facility-list-body">
+                <div className="manager-sports">
+                    {sports.length > 0 ? sports.map((sport) => (
+                        <span key={sport}>{SPORT_TYPE_LABEL[sport]}</span>
+                    )) : <span>종목 미등록</span>}
+                </div>
+                <h2>{facility.name || "이름 없는 경기장"}</h2>
+                <p>⌖ {facility.address || "주소 정보 없음"}</p>
+                <div className="facility-list-price">
+                    <span>평일 {weekdayPrice.toLocaleString()}원</span>
+                    <small>주말 {weekendPrice.toLocaleString()}원 · 리뷰 {reviewCount}</small>
+                </div>
             </div>
         </Link>
     );
@@ -204,23 +212,21 @@ function Pagination({
     if (totalPages <= 1) return null;
 
     return (
-        <div className="mt-8 flex items-center justify-center gap-2">
+        <div className="pagination">
             <button
                 type="button"
                 disabled={page === 0}
                 onClick={() => onChange(page - 1)}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
                 이전
             </button>
-            <span className="text-sm text-zinc-600">
+            <span>
         {page + 1} / {totalPages}
       </span>
             <button
                 type="button"
                 disabled={page >= totalPages - 1}
                 onClick={() => onChange(page + 1)}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
                 다음
             </button>
