@@ -292,6 +292,10 @@ function MatchActions({
             await action();
             await onChanged();
         } catch (err) {
+            if (err instanceof ApiError && err.code === "USER_005") {
+                router.push(`/mypage/sports?requiredSport=${match.sportType}&next=${encodeURIComponent(`/matches/${match.matchId}`)}`);
+                return;
+            }
             setError(err instanceof ApiError ? err.message : fallbackMsg);
         } finally {
             setSubmitting(false);
