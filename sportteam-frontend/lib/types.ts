@@ -372,7 +372,7 @@ export interface MyRecordResponse {
     sportStats: Array<{ sportType: SportType; count: number }>;
     monthlyStats: Array<{ year: number; month: number; count: number }>;
     mannerStat: { mannerScore: number; mannerReviewCount: number };
-    skillStats: Array<{ sportType: SportType; position?: string | null; skillRating: number; reviewCount: number }>;
+    skillStats: Array<{ sportType: SportType; skillRating: number; reviewCount: number }>;
 }
 
 export interface NotificationResponse {
