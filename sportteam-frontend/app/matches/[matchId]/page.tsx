@@ -7,11 +7,18 @@ import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 import {
+    cancelMatch,
     getMatch,
     getMatchParticipants,
     joinMatch,
     leaveMatch,
 } from "@/lib/match";
+import {
+    calculateHostCancelDeadline,
+    formatPolicyDateTime,
+    inferMatchStartAtFromCancelDeadline,
+    isBeforeNow,
+} from "@/lib/match-policy";
 import {
     MATCH_STATUS_LABEL,
     REQUIRED_GENDER_LABEL,
@@ -119,6 +126,8 @@ export default function MatchDetailPage() {
 
 function MatchInfo({ match }: { match: MatchDetailResponse }) {
     const full = match.currentCount >= match.capacity;
+    const matchStartAt = inferMatchStartAtFromCancelDeadline(match.cancelDeadline);
+    const hostCancelDeadline = matchStartAt ? calculateHostCancelDeadline(matchStartAt) : null;
 
     return (
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
@@ -167,6 +176,10 @@ function MatchInfo({ match }: { match: MatchDetailResponse }) {
                     label="취소 마감"
                     value={formatDateTime(match.cancelDeadline)}
                 />
+                <InfoItem
+                    label="방장 취소 마감"
+                    value={formatPolicyDateTime(hostCancelDeadline)}
+                />
                 {match.confirmedAt ? (
                     <InfoItem label="확정 시각" value={formatDateTime(match.confirmedAt)} />
                 ) : null}
@@ -174,6 +187,16 @@ function MatchInfo({ match }: { match: MatchDetailResponse }) {
                     <InfoItem label="취소 시각" value={formatDateTime(match.cancelledAt)} />
                 ) : null}
             </dl>
+            <div className="refund-policy-card">
+                <b>환불 정책</b>
+                <p>확정 상태여도 아래 시간 정책을 그대로 따릅니다.</p>
+                <ul>
+                    <li>결제 실패·만료: 환불 없음, 자리 선점만 취소</li>
+                    <li>참가자 직접 이탈: 경기 시작 24시간 전까지 전액 환불</li>
+                    <li>최소 인원 미달 자동 취소: 결제 완료 참가자 전원 전액 환불</li>
+                    <li>방장 취소: 경기 시작 3일 전까지 가능, 참가자 전원 전액 환불</li>
+                </ul>
+            </div>
         </div>
     );
 }
@@ -273,6 +296,11 @@ function MatchActions({
     );
     const full = match.currentCount >= match.capacity;
     const recruiting = match.status === "RECRUITING";
+    const cancellableStatus = match.status === "RECRUITING" || match.status === "CONFIRMED";
+    const matchStartAt = inferMatchStartAtFromCancelDeadline(match.cancelDeadline);
+    const participantCancelClosed = isBeforeNow(match.cancelDeadline);
+    const hostCancelDeadline = matchStartAt ? calculateHostCancelDeadline(matchStartAt) : null;
+    const hostCancelClosed = isBeforeNow(hostCancelDeadline);
 
     async function run(action: () => Promise<unknown>, fallbackMsg: string) {
         setSubmitting(true);
@@ -296,23 +324,46 @@ function MatchActions({
             ) : null}
 
             {isHost ? (
-                <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
-                    내가 주최한 매치입니다.
-                </p>
+                <div className="flex flex-col gap-2">
+                    <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
+                        내가 주최한 매치입니다. 방장 취소는 경기 시작 3일 전까지만 가능합니다.
+                    </p>
+                    <Button
+                        type="button"
+                        loading={submitting}
+                        disabled={!cancellableStatus || hostCancelClosed}
+                        onClick={() => {
+                            if (!window.confirm("매치를 취소하면 참가자 전원에게 전액 환불 요청이 진행됩니다. 취소할까요?")) return;
+                            void run(
+                                () => cancelMatch(match.matchId),
+                                "매치 취소에 실패했습니다.",
+                            );
+                        }}
+                        className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
+                    >
+                        {hostCancelClosed ? "방장 취소 마감" : "매치 취소"}
+                    </Button>
+                </div>
             ) : myActive ? (
-                <Button
-                    type="button"
-                    loading={submitting}
-                    onClick={() =>
-                        run(
-                            () => leaveMatch(match.matchId),
-                            "참여 취소에 실패했습니다.",
-                        )
-                    }
-                    className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
-                >
-                    참여 취소
-                </Button>
+                <div className="flex flex-col gap-2">
+                    <p className="rounded-lg bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-700">
+                        참가자 이탈은 경기 시작 24시간 전까지 가능하며 전액 환불됩니다.
+                    </p>
+                    <Button
+                        type="button"
+                        loading={submitting}
+                        disabled={participantCancelClosed}
+                        onClick={() =>
+                            run(
+                                () => leaveMatch(match.matchId),
+                                "참여 취소에 실패했습니다.",
+                            )
+                        }
+                        className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
+                    >
+                        {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 전액 환불"}
+                    </Button>
+                </div>
             ) : !recruiting ? (
                 <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-500">
                     모집이 마감된 매치입니다.

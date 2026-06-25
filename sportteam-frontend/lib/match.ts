@@ -83,3 +83,11 @@ export function leaveMatch(matchId: string): Promise<void> {
         auth: true,
     });
 }
+
+/** 방장 매치 취소 */
+export function cancelMatch(matchId: string): Promise<void> {
+    return apiFetch<void>(`/api/v1/matches/${matchId}`, {
+        method: "DELETE",
+        auth: true,
+    });
+}
