@@ -1,5 +1,5 @@
 import { apiFetch } from "./http";
-import type { FacilityCreateRequest, FacilityResponse, FacilitySlotResponse, FacilitySummaryResponse, SlotSetupRequest } from "./types";
+import type { FacilityCreateRequest, FacilityReservationOverviewResponse, FacilityResponse, FacilitySlotResponse, FacilitySummaryResponse, SlotSetupRequest } from "./types";
 
 export function getMyFacilities(managerId: string) {
     return apiFetch<FacilitySummaryResponse[]>("/api/v1/manager/facilities", {
@@ -24,4 +24,15 @@ export function setupFacilitySlots(managerId: string, facilityId: string, reques
         headers: { "X-USER-ID": managerId },
         body: request,
     });
+}
+
+export function getFacilityReservations(managerId: string, facilityId: string, fromDate: string, toDate: string) {
+    const query = new URLSearchParams({ fromDate, toDate });
+    return apiFetch<FacilityReservationOverviewResponse>(
+        `/api/v1/manager/facilities/${facilityId}/reservations?${query.toString()}`,
+        {
+            auth: true,
+            headers: { "X-USER-ID": managerId },
+        },
+    );
 }
