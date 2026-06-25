@@ -172,7 +172,9 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 const SLOT_STATUS_LABEL: Record<FacilitySlotResponse["status"], string> = {
     AVAILABLE: "예약 가능",
+    PENDING: "결제 대기",
     RESERVED: "예약됨",
+    CLOSED: "마감",
     BLOCKED: "마감",
 };
 

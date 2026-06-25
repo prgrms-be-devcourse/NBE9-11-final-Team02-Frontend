@@ -97,7 +97,8 @@ export type FacilityStatus = "ACTIVE" | "CLOSED";
 
 export type Amenity = "PARKING" | "SHOWER" | "LOCKER" | "EQUIPMENT_RENTAL";
 
-export type SlotStatus = "AVAILABLE" | "RESERVED" | "BLOCKED";
+export type SlotStatus = "AVAILABLE" | "PENDING" | "RESERVED" | "CLOSED" | "BLOCKED";
+export type ReservationStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
 /** Spring Data Page<T> 응답과 매칭 */
 export interface PageResponse<T> {
@@ -180,6 +181,29 @@ export interface SlotSetupRequest {
     endTime: string;
     weekdayPrice: number;
     weekendPrice: number;
+}
+
+export interface FacilityReservationSlotResponse {
+    slotId: string;
+    slotDate: string;
+    startTime: string;
+    endTime: string;
+    price: number;
+    slotStatus: SlotStatus;
+    reservationId: string | null;
+    reservationStatus: ReservationStatus | null;
+    revenue: number;
+}
+
+export interface FacilityReservationOverviewResponse {
+    facilityId: string;
+    fromDate: string;
+    toDate: string;
+    totalSlots: number;
+    reservedSlots: number;
+    availableSlots: number;
+    totalRevenue: number;
+    slots: FacilityReservationSlotResponse[];
 }
 
 // ---- mypage / matches ----
