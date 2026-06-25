@@ -15,7 +15,6 @@ import {
 } from "@/lib/match";
 import {
     calculateHostCancelDeadline,
-    formatPolicyDateTime,
     inferMatchStartAtFromCancelDeadline,
     isBeforeNow,
 } from "@/lib/match-policy";
@@ -126,8 +125,6 @@ export default function MatchDetailPage() {
 
 function MatchInfo({ match }: { match: MatchDetailResponse }) {
     const full = match.currentCount >= match.capacity;
-    const matchStartAt = inferMatchStartAtFromCancelDeadline(match.cancelDeadline);
-    const hostCancelDeadline = matchStartAt ? calculateHostCancelDeadline(matchStartAt) : null;
 
     return (
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
@@ -176,10 +173,6 @@ function MatchInfo({ match }: { match: MatchDetailResponse }) {
                     label="취소 마감"
                     value={formatDateTime(match.cancelDeadline)}
                 />
-                <InfoItem
-                    label="방장 취소 마감"
-                    value={formatPolicyDateTime(hostCancelDeadline)}
-                />
                 {match.confirmedAt ? (
                     <InfoItem label="확정 시각" value={formatDateTime(match.confirmedAt)} />
                 ) : null}
@@ -187,16 +180,6 @@ function MatchInfo({ match }: { match: MatchDetailResponse }) {
                     <InfoItem label="취소 시각" value={formatDateTime(match.cancelledAt)} />
                 ) : null}
             </dl>
-            <div className="refund-policy-card">
-                <b>환불 정책</b>
-                <p>확정 상태여도 아래 시간 정책을 그대로 따릅니다.</p>
-                <ul>
-                    <li>결제 실패·만료: 환불 없음, 자리 선점만 취소</li>
-                    <li>참가자 직접 이탈: 경기 시작 24시간 전까지 전액 환불</li>
-                    <li>최소 인원 미달 자동 취소: 결제 완료 참가자 전원 전액 환불</li>
-                    <li>방장 취소: 경기 시작 3일 전까지 가능, 참가자 전원 전액 환불</li>
-                </ul>
-            </div>
         </div>
     );
 }
@@ -326,7 +309,7 @@ function MatchActions({
             {isHost ? (
                 <div className="flex flex-col gap-2">
                     <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
-                        내가 주최한 매치입니다. 방장 취소는 경기 시작 3일 전까지만 가능합니다.
+                        내가 주최한 매치입니다.
                     </p>
                     <Button
                         type="button"
