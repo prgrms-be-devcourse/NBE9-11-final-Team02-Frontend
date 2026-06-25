@@ -67,7 +67,8 @@ function MatchCreateForm() {
         } catch (err) {
             if (err instanceof ApiError && err.code === "USER_005") {
                 const next = window.location.pathname + window.location.search;
-                router.push(`/mypage/sports?next=${encodeURIComponent(next)}`);
+                const requiredSport = String(data.get("sportType"));
+                router.push(`/mypage/sports?requiredSport=${requiredSport}&next=${encodeURIComponent(next)}`);
                 return;
             }
             setError(err instanceof Error ? err.message : "매치를 생성하지 못했습니다.");
