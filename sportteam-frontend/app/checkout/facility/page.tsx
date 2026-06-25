@@ -8,6 +8,7 @@ import { RequireAuth } from "@/components/require-auth";
 import { useAuth } from "@/lib/auth-context";
 import {
     confirmPayment,
+    consumeQueueToken,
     getQueueStatus,
     issueQueueToken,
     prepareFacilityPayment,
@@ -62,7 +63,7 @@ function FacilityCheckout() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
         setError(undefined);
-        confirmPayment({ userId: user.userId, paymentKey, orderId, amount: approvedAmount })
+        confirmPayment({ paymentKey, orderId, amount: approvedAmount })
             .then(() => {
                 if (!active) return;
                 setMessage("방장 결제가 완료되었습니다. 내 매치 목록으로 이동합니다.");
@@ -91,8 +92,9 @@ function FacilityCheckout() {
             setQueue(current);
             if (!current.enterable) return;
 
+            await consumeQueueToken(current.token);
+
             const prepared = await prepareFacilityPayment({
-                userId: user.userId,
                 facilitySlotId: slotId,
                 amount,
                 queueToken: current.token,

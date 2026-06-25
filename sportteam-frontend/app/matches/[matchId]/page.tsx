@@ -276,7 +276,7 @@ function MatchActions({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSubmitting(true);
         setError(undefined);
-        confirmPayment({ userId: currentUserId, paymentKey, orderId, amount })
+        confirmPayment({ paymentKey, orderId, amount })
             .then(async () => {
                 if (!active) return;
                 setMessage("결제가 완료되었습니다. 참가 상태를 갱신했습니다.");
@@ -369,7 +369,6 @@ function MatchActions({
             }
 
             const prepared = await prepareParticipationPayment({
-                userId,
                 matchId: match.matchId,
                 amount: match.feePerPerson,
             });

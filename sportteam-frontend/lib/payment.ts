@@ -27,12 +27,10 @@ export function consumeQueueToken(token: string) {
 }
 
 export function prepareParticipationPayment(input: {
-    userId?: string;
     matchId: string;
     amount: number;
 }) {
     return preparePayment({
-        userId: input.userId,
         matchId: input.matchId,
         amount: input.amount,
         paymentType: "PARTICIPATION",
@@ -40,13 +38,11 @@ export function prepareParticipationPayment(input: {
 }
 
 export function prepareFacilityPayment(input: {
-    userId?: string;
     facilitySlotId: string;
     amount: number;
     queueToken?: string;
 }) {
     return preparePayment({
-        userId: input.userId,
         facilitySlotId: input.facilitySlotId,
         amount: input.amount,
         paymentType: "FACILITY",
@@ -55,7 +51,6 @@ export function prepareFacilityPayment(input: {
 }
 
 function preparePayment(input: {
-    userId?: string;
     matchId?: string;
     facilitySlotId?: string;
     amount: number;
@@ -69,7 +64,6 @@ function preparePayment(input: {
     return apiFetch<PaymentPrepareResponse>(`/api/v1/payments/prepare${query}`, {
         method: "POST",
         auth: true,
-        headers: input.userId ? { "X-USER-ID": input.userId } : undefined,
         body: {
             matchId: input.matchId ?? null,
             facilitySlotId: input.facilitySlotId ?? null,
@@ -80,7 +74,6 @@ function preparePayment(input: {
 }
 
 export function confirmPayment(input: {
-    userId?: string;
     paymentKey: string;
     orderId: string;
     amount: number;
@@ -88,7 +81,6 @@ export function confirmPayment(input: {
     return apiFetch<PaymentConfirmResponse>("/api/v1/payments/confirm", {
         method: "POST",
         auth: true,
-        headers: input.userId ? { "X-USER-ID": input.userId } : undefined,
         body: {
             paymentKey: input.paymentKey,
             orderId: input.orderId,
