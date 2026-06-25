@@ -14,8 +14,6 @@ import {
     leaveMatch,
 } from "@/lib/match";
 import {
-    calculateHostCancelDeadline,
-    inferMatchStartAtFromCancelDeadline,
     isBeforeNow,
 } from "@/lib/match-policy";
 import {
@@ -170,8 +168,12 @@ function MatchInfo({ match }: { match: MatchDetailResponse }) {
                     value={formatDateTime(match.recruitDeadline)}
                 />
                 <InfoItem
-                    label="취소 마감"
-                    value={formatDateTime(match.cancelDeadline)}
+                    label="참가 취소 마감"
+                    value={formatDateTime(match.participantCancelDeadline)}
+                />
+                <InfoItem
+                    label="방장 취소 마감"
+                    value={formatDateTime(match.hostCancelDeadline)}
                 />
                 {match.confirmedAt ? (
                     <InfoItem label="확정 시각" value={formatDateTime(match.confirmedAt)} />
@@ -280,10 +282,8 @@ function MatchActions({
     const full = match.currentCount >= match.capacity;
     const recruiting = match.status === "RECRUITING";
     const cancellableStatus = match.status === "RECRUITING" || match.status === "CONFIRMED";
-    const matchStartAt = inferMatchStartAtFromCancelDeadline(match.cancelDeadline);
-    const participantCancelClosed = isBeforeNow(match.cancelDeadline);
-    const hostCancelDeadline = matchStartAt ? calculateHostCancelDeadline(matchStartAt) : null;
-    const hostCancelClosed = isBeforeNow(hostCancelDeadline);
+    const participantCancelClosed = isBeforeNow(match.participantCancelDeadline);
+    const hostCancelClosed = isBeforeNow(match.hostCancelDeadline);
 
     async function run(action: () => Promise<unknown>, fallbackMsg: string) {
         setSubmitting(true);
@@ -309,7 +309,7 @@ function MatchActions({
             {isHost ? (
                 <div className="flex flex-col gap-2">
                     <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
-                        내가 주최한 매치입니다.
+                        내가 주최한 매치입니다. 방장 취소 마감 전까지만 매치를 취소할 수 있습니다.
                     </p>
                     <Button
                         type="button"
@@ -330,7 +330,7 @@ function MatchActions({
             ) : myActive ? (
                 <div className="flex flex-col gap-2">
                     <p className="rounded-lg bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-700">
-                        참가자 이탈은 경기 시작 24시간 전까지 가능하며 전액 환불됩니다.
+                        참가 취소 마감 전까지 취소할 수 있으며 전액 환불됩니다.
                     </p>
                     <Button
                         type="button"

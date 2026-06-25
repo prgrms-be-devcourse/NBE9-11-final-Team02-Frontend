@@ -8,9 +8,9 @@ import { RequireAuth } from "@/components/require-auth";
 import { createMatch } from "@/lib/match";
 import { ApiError } from "@/lib/http";
 import {
+    calculateHostCancelDeadline,
     calculateParticipantCancelDeadline,
     calculateRecruitDeadline,
-    formatPolicyDateTime,
     parseSlotStartAt,
     toDateTimeLocalValue,
 } from "@/lib/match-policy";
@@ -38,27 +38,15 @@ function MatchCreateForm() {
     const slotLabel = useMemo(() => `${date} ${startTime.slice(0,5)} ~ ${endTime.slice(0,5)}`, [date, endTime, startTime]);
     const matchStartAt = useMemo(() => parseSlotStartAt(date, startTime), [date, startTime]);
     const recruitDeadline = useMemo(() => matchStartAt ? calculateRecruitDeadline(matchStartAt) : null, [matchStartAt]);
-    const cancelDeadline = useMemo(() => matchStartAt ? calculateParticipantCancelDeadline(matchStartAt) : null, [matchStartAt]);
-
-    function getDeadlineError() {
-        const now = Date.now();
-        if (!matchStartAt || !recruitDeadline || !cancelDeadline) return "경기 시간 정보를 확인할 수 없습니다.";
-        if (cancelDeadline.getTime() <= now) {
-            return `이 시간은 경기 시작 24시간 전 취소 마감(${formatPolicyDateTime(cancelDeadline)})이 이미 지나 매치를 만들 수 없습니다. 24시간 이후 슬롯을 선택해주세요.`;
-        }
-        if (recruitDeadline.getTime() <= now) {
-            return `이 시간은 모집 마감(${formatPolicyDateTime(recruitDeadline)})이 이미 지나 매치를 만들 수 없습니다.`;
-        }
-        return undefined;
-    }
+    const participantCancelDeadline = useMemo(() => matchStartAt ? calculateParticipantCancelDeadline(matchStartAt) : null, [matchStartAt]);
+    const hostCancelDeadline = useMemo(() => matchStartAt ? calculateHostCancelDeadline(matchStartAt) : null, [matchStartAt]);
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault(); setError(undefined); setSubmitting(true);
         const data = new FormData(event.currentTarget);
         try {
-            const deadlineError = getDeadlineError();
-            if (deadlineError) {
-                setError(deadlineError);
+            if (!recruitDeadline || !participantCancelDeadline || !hostCancelDeadline) {
+                setError("경기 시간 정보를 확인할 수 없습니다.");
                 return;
             }
             const match = await createMatch({
@@ -70,8 +58,9 @@ function MatchCreateForm() {
                 minSkillLevel: String(data.get("minSkillLevel")) as SkillLevel,
                 maxSkillLevel: String(data.get("maxSkillLevel")) as SkillLevel,
                 requiredGender: String(data.get("requiredGender")) as RequiredGender,
-                recruitDeadline: recruitDeadline ? toDateTimeLocalValue(recruitDeadline) : String(data.get("recruitDeadline")),
-                cancelDeadline: cancelDeadline ? toDateTimeLocalValue(cancelDeadline) : String(data.get("cancelDeadline")),
+                recruitDeadline: toDateTimeLocalValue(recruitDeadline),
+                participantCancelDeadline: toDateTimeLocalValue(participantCancelDeadline),
+                hostCancelDeadline: toDateTimeLocalValue(hostCancelDeadline),
             });
             const query = new URLSearchParams({ matchId: match.matchId, facilityId, slotId: reservationId, date, startTime, endTime, amount: String(amount) });
             router.push(`/checkout/facility?${query}`);

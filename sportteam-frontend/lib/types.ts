@@ -306,7 +306,8 @@ export interface MatchDetailResponse {
     maxSkillLevel: SkillLevel;
     requiredGender: RequiredGender;
     recruitDeadline: string;
-    cancelDeadline: string | null;
+    participantCancelDeadline: string | null;
+    hostCancelDeadline: string | null;
     confirmedAt: string | null;
     cancelledAt: string | null;
     status: MatchStatus;
@@ -332,7 +333,8 @@ export interface MatchCreateRequest {
     maxSkillLevel: SkillLevel;
     requiredGender: RequiredGender;
     recruitDeadline: string;
-    cancelDeadline: string;
+    participantCancelDeadline: string;
+    hostCancelDeadline: string;
 }
 
 export type MatchCreateResponse = MatchDetailResponse;
