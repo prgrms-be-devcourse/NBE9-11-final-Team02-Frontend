@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Select } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
+import { calculateParticipantCancelDeadline, formatPolicyDateTime, parseSlotStartAt } from "@/lib/match-policy";
 import { getMatchPayment, getMyMatches } from "@/lib/mypage-match";
 import type {
     MatchParticipantRole,
@@ -234,6 +235,9 @@ function MatchCard({
     expanded: boolean;
     onToggle: () => void;
 }) {
+    const startAt = parseSlotStartAt(match.matchDate, match.startTime);
+    const participantCancelDeadline = startAt ? calculateParticipantCancelDeadline(startAt) : null;
+
     return (
         <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
             <button
@@ -255,6 +259,11 @@ function MatchCard({
                         {match.matchDate} {match.startTime.slice(0, 5)} ~{" "}
                         {match.endTime.slice(0, 5)}
                     </p>
+                    {match.myMatchStatus === "PARTICIPATING" ? (
+                        <p className="text-xs text-emerald-700">
+                            참여 취소 가능 마감: {formatPolicyDateTime(participantCancelDeadline)} · 마감 전 전액 환불
+                        </p>
+                    ) : null}
                 </div>
                 <span
                     className={
@@ -338,6 +347,14 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
                         value={PAYMENT_STATUS_LABEL[payment.hostDetail.facilityPaymentStatus]}
                     />
                     <PaymentItem
+                        label="환불 시각"
+                        value={formatNullableDateTime(payment.hostDetail.refundedAt)}
+                    />
+                    <PaymentItem
+                        label="환불 사유"
+                        value={payment.hostDetail.refundReason ?? "-"}
+                    />
+                    <PaymentItem
                         label="정산 금액"
                         value={
                             payment.hostDetail.hostSettlementAmount != null
@@ -366,10 +383,31 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
                         label="결제 상태"
                         value={PAYMENT_STATUS_LABEL[payment.participantDetail.status]}
                     />
+                    <PaymentItem
+                        label="환불 시각"
+                        value={formatNullableDateTime(payment.participantDetail.refundedAt)}
+                    />
+                    <PaymentItem
+                        label="환불 사유"
+                        value={payment.participantDetail.refundReason ?? "-"}
+                    />
                 </>
             ) : null}
         </dl>
     );
+}
+
+function formatNullableDateTime(value: string | null) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 }
 
 function PaymentItem({ label, value }: { label: string; value: string }) {
