@@ -469,3 +469,14 @@ export interface SettlementItemResponse {
     status: SettlementStatus;
     createdAt: string;
 }
+
+/** GET /api/v1/matches/recommendations 항목 (요약 + 추천 점수·사유) */
+export interface MatchRecommendationResponse extends MatchSummaryResponse {
+    recommendationScore: number;
+    reasons: string[];
+}
+
+/** GET /api/v1/health 응답 */
+export interface HealthResponse {
+    status: string;
+}
