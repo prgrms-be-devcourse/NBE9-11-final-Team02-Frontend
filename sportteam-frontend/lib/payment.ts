@@ -26,10 +26,7 @@ export function consumeQueueToken(token: string) {
     });
 }
 
-export function prepareParticipationPayment(input: {
-    matchId: string;
-    amount: number;
-}) {
+export function prepareParticipationPayment(input: { userId: string; matchId: string; amount: number }) {
     return preparePayment({
         matchId: input.matchId,
         amount: input.amount,
@@ -73,11 +70,7 @@ function preparePayment(input: {
     });
 }
 
-export function confirmPayment(input: {
-    paymentKey: string;
-    orderId: string;
-    amount: number;
-}) {
+export function confirmPayment(input: { userId: string; paymentKey: string; orderId: string; amount: number }) {
     return apiFetch<PaymentConfirmResponse>("/api/v1/payments/confirm", {
         method: "POST",
         auth: true,

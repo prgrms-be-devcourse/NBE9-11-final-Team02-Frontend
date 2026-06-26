@@ -62,7 +62,7 @@ function FacilityCheckout() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
         setError(undefined);
-        confirmPayment({ paymentKey, orderId, amount: approvedAmount })
+        confirmPayment({paymentKey, orderId, amount: approvedAmount})
             .then(() => {
                 if (!active) return;
                 setMessage("방장 결제가 완료되었습니다. 생성된 매치 상세로 이동합니다.");

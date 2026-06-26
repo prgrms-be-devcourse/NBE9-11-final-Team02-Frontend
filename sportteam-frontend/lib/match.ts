@@ -10,7 +10,7 @@ import type {
     PageResponse,
     RequiredGender,
     SkillLevel,
-    SportType,
+    SportType, MatchRecommendationResponse,
 } from "./types";
 
 /** 시설 슬롯을 홀드하고 새 매치를 생성 */
@@ -91,4 +91,24 @@ export function cancelMatch(matchId: string): Promise<void> {
         method: "DELETE",
         auth: true,
     });
+}
+
+export interface GetRecommendationsParams {
+    sportType: SportType;
+    gender?: RequiredGender;
+    size?: number;
+}
+
+/** 종목 기반 맞춤 매치 추천 (인증 필요) */
+export function getMatchRecommendations(
+    params: GetRecommendationsParams,
+): Promise<MatchRecommendationResponse[]> {
+    const query = new URLSearchParams({ sportType: params.sportType });
+    if (params.gender) query.set("gender", params.gender);
+    if (params.size) query.set("size", String(params.size));
+
+    return apiFetch<MatchRecommendationResponse[]>(
+        `/api/v1/matches/recommendations?${query.toString()}`,
+        { auth: true },
+    );
 }
