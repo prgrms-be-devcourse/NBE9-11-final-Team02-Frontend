@@ -10,3 +10,11 @@ export function getFacilityReviews(
         `/api/v1/facilities/${facilityId}/reviews${buildQuery(params)}`,
     );
 }
+
+/** GET /api/v1/users/me/reviews/facilities — 내가 작성한 시설 후기 목록. 인증 필요 */
+export function getMyFacilityReviews(userId: string) {
+    return apiFetch<FacilityReviewResponse[]>(
+        "/api/v1/users/me/reviews/facilities",
+        { auth: true, headers: { "X-USER-ID": userId } },
+    );
+}
