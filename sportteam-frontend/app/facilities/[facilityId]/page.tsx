@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { getFacility, getFacilitySlots } from "@/lib/facility";
 import { ApiError } from "@/lib/http";
 import { useAuth } from "@/lib/auth-context";
+import { calculateRecruitDeadline, isBeforeNow, parseSlotStartAt } from "@/lib/match-policy";
 import type {
     Amenity,
     FacilityResponse,
@@ -235,43 +236,49 @@ function SlotBrowser({ facilityId, sportType }: { facilityId: string; sportType:
                 </p>
             ) : (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {slots.map((slot) => (
-                        <button
-                            key={slot.id}
-                            type="button"
-                            disabled={slot.status !== "AVAILABLE" || authLoading}
-                            onClick={() => {
-                                const next = `/facilities/${facilityId}`;
-                                if (!user) {
-                                    router.push(`/login?next=${encodeURIComponent(next)}`);
-                                    return;
+                    {slots.map((slot) => {
+                        const startAt = parseSlotStartAt(slot.slotDate, slot.startTime);
+                        const recruitClosed = startAt ? isBeforeNow(calculateRecruitDeadline(startAt)) : true;
+                        const disabled = slot.status !== "AVAILABLE" || recruitClosed || authLoading;
+
+                        return (
+                            <button
+                                key={slot.id}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => {
+                                    const next = `/facilities/${facilityId}`;
+                                    if (!user) {
+                                        router.push(`/login?next=${encodeURIComponent(next)}`);
+                                        return;
+                                    }
+                                    const query = new URLSearchParams({
+                                        reservationId: slot.id,
+                                        facilityId,
+                                        sportType,
+                                        date: slot.slotDate,
+                                        startTime: slot.startTime,
+                                        endTime: slot.endTime,
+                                        amount: String(slot.price),
+                                    });
+                                    router.push(`/matches/new?${query}`);
+                                }}
+                                className={
+                                    !disabled
+                                        ? "rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-sm transition hover:border-emerald-500 hover:bg-emerald-50"
+                                        : "cursor-not-allowed rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-left text-sm opacity-50"
                                 }
-                                const query = new URLSearchParams({
-                                    reservationId: slot.id,
-                                    facilityId,
-                                    sportType,
-                                    date: slot.slotDate,
-                                    startTime: slot.startTime,
-                                    endTime: slot.endTime,
-                                    amount: String(slot.price),
-                                });
-                                router.push(`/matches/new?${query}`);
-                            }}
-                            className={
-                                slot.status === "AVAILABLE"
-                                    ? "rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-sm transition hover:border-emerald-500 hover:bg-emerald-50"
-                                    : "cursor-not-allowed rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-left text-sm opacity-50"
-                            }
-                        >
-                            <p className="font-medium text-zinc-900">
-                                {slot.startTime.slice(0, 5)} ~ {slot.endTime.slice(0, 5)}
-                            </p>
-                            <p className="text-zinc-500">{slot.price.toLocaleString()}원</p>
-                            <p className="text-xs text-zinc-400">
-                                {SLOT_STATUS_LABEL[slot.status]}
-                            </p>
-                        </button>
-                    ))}
+                            >
+                                <p className="font-medium text-zinc-900">
+                                    {slot.startTime.slice(0, 5)} ~ {slot.endTime.slice(0, 5)}
+                                </p>
+                                <p className="text-zinc-500">{slot.price.toLocaleString()}원</p>
+                                <p className="text-xs text-zinc-400">
+                                    {recruitClosed && slot.status === "AVAILABLE" ? "모집 마감" : SLOT_STATUS_LABEL[slot.status]}
+                                </p>
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
