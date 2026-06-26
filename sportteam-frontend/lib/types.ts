@@ -498,3 +498,16 @@ export interface PresignedUrlResponse {
     /** 업로드 완료 후 접근 가능한 최종 파일 URL */
     fileUrl: string;
 }
+
+export interface FacilityUpdateRequest {
+    phone?: string;
+    description?: string;
+    capacity: number;
+    slotDurationMinutes: number;
+    defaultWeekdayPrice: number;
+    defaultWeekendPrice: number;
+    slotOpenAt?: string | null;
+    sportTypes?: SportType[];
+    amenities?: Amenity[];
+    imageUrls?: string[];
+}

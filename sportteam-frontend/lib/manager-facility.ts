@@ -1,5 +1,5 @@
 import { apiFetch } from "./http";
-import type { FacilityCreateRequest, FacilityReservationOverviewResponse, FacilityResponse, FacilitySlotResponse, FacilitySummaryResponse, SlotSetupRequest, SlotUpdateRequest } from "./types";
+import type { FacilityCreateRequest, FacilityReservationOverviewResponse, FacilityResponse, FacilitySlotResponse, FacilitySummaryResponse, FacilityUpdateRequest, SlotSetupRequest, SlotUpdateRequest } from "./types";
 
 export function getMyFacilities(managerId: string) {
     return apiFetch<FacilitySummaryResponse[]>("/api/v1/manager/facilities", {
@@ -48,5 +48,31 @@ export function updateFacilitySlot(
         auth: true,
         headers: { "X-USER-ID": managerId },
         body: request,
+    });
+}
+
+export function updateFacility(managerId: string, facilityId: string, request: FacilityUpdateRequest) {
+    return apiFetch<FacilityResponse>(`/api/v1/manager/facilities/${facilityId}`, {
+        method: "PATCH",
+        auth: true,
+        headers: { "X-USER-ID": managerId },
+        body: request,
+    });
+}
+
+export function deleteFacility(managerId: string, facilityId: string) {
+    return apiFetch<void>(`/api/v1/manager/facilities/${facilityId}`, {
+        method: "DELETE",
+        auth: true,
+        headers: { "X-USER-ID": managerId },
+    });
+}
+
+export function deleteFacilityImage(managerId: string, facilityId: string, imageUrl: string) {
+    const query = new URLSearchParams({ imageUrl });
+    return apiFetch<void>(`/api/v1/manager/facilities/${facilityId}/images?${query.toString()}`, {
+        method: "DELETE",
+        auth: true,
+        headers: { "X-USER-ID": managerId },
     });
 }
