@@ -475,3 +475,8 @@ export interface MatchRecommendationResponse extends MatchSummaryResponse {
     recommendationScore: number;
     reasons: string[];
 }
+
+/** GET /api/v1/health 응답 */
+export interface HealthResponse {
+    status: string;
+}
