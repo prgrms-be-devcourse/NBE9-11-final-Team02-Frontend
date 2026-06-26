@@ -490,3 +490,11 @@ export interface FacilityReviewResponse {
     comment: string | null;
     createdAt: string;
 }
+
+/** GET /api/v1/s3/presigned-url 응답 */
+export interface PresignedUrlResponse {
+    /** S3 직접 PUT 업로드용 presigned URL */
+    uploadUrl: string;
+    /** 업로드 완료 후 접근 가능한 최종 파일 URL */
+    fileUrl: string;
+}
