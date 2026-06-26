@@ -218,6 +218,7 @@ export type MatchParticipantRole = "HOST" | "PARTICIPANT";
 export type MyMatchStatus = "PARTICIPATING" | "COMPLETED" | "CANCELLED";
 
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+export type PaymentType = "PARTICIPATION" | "FACILITY";
 
 export type SettlementStatus = "HOLDING" | "SETTLED" | "FAILED";
 
@@ -351,6 +352,14 @@ export interface WaitingQueueTokenResponse {
 export interface PaymentPrepareResponse {
     merchantUid: string;
     amount: number;
+}
+
+export interface PaymentConfirmResponse {
+    merchantUid: string;
+    paymentKey: string;
+    amount: number;
+    status: PaymentStatus;
+    approvedAt: string | null;
 }
 
 export type SelfReportedLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";

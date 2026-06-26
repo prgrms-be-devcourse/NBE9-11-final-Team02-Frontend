@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
+import { confirmPayment, prepareParticipationPayment, requestTossPayment } from "@/lib/payment";
 import {
     cancelMatch,
     getMatch,
     getMatchParticipants,
-    joinMatch,
     leaveMatch,
 } from "@/lib/match";
 import {
@@ -258,10 +258,41 @@ function MatchActions({
     onChanged: () => Promise<void>;
 }) {
     const router = useRouter();
+    const search = useSearchParams();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string>();
+    const [message, setMessage] = useState<string>();
+    const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
-    // 로그인하지 않은 경우
+    useEffect(() => {
+        if (!currentUserId) return;
+        const paymentKey = search.get("paymentKey");
+        const orderId = search.get("orderId");
+        const amount = Number(search.get("amount") ?? 0);
+        if (!paymentKey || !orderId || !amount) return;
+
+        let active = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSubmitting(true);
+        setError(undefined);
+        confirmPayment({ userId: currentUserId, paymentKey, orderId, amount })
+            .then(async () => {
+                if (!active) return;
+                setMessage("결제가 완료되었습니다. 참가 상태를 갱신했습니다.");
+                await onChanged();
+                router.replace(`/matches/${match.matchId}?payment=success`);
+            })
+            .catch((err) => {
+                if (active) setError(err instanceof ApiError ? err.message : "결제 승인에 실패했습니다.");
+            })
+            .finally(() => {
+                if (active) setSubmitting(false);
+            });
+        return () => {
+            active = false;
+        };
+    }, [currentUserId, match.matchId, onChanged, router, search]);
+
     if (!currentUserId) {
         return (
             <div className="mt-6">
@@ -275,9 +306,10 @@ function MatchActions({
         );
     }
 
-    const isHost = match.hostId === currentUserId;
+    const userId = currentUserId;
+    const isHost = match.hostId === userId;
     const myActive = participants.some(
-        (p) => p.userId === currentUserId && p.status === "ACTIVE",
+        (p) => p.userId === userId && p.status === "ACTIVE",
     );
     const myPaymentPending = participants.some(
         (p) => p.userId === currentUserId && p.status === "PAYMENT_PENDING",
@@ -292,6 +324,7 @@ function MatchActions({
         if (submitting) return;
         setSubmitting(true);
         setError(undefined);
+        setMessage(undefined);
         try {
             await action();
             await onChanged();
@@ -306,6 +339,42 @@ function MatchActions({
         }
     }
 
+    async function startParticipationPayment() {
+        setSubmitting(true);
+        setError(undefined);
+        setMessage(undefined);
+        try {
+            const prepared = await prepareParticipationPayment({
+                userId,
+                matchId: match.matchId,
+                amount: match.feePerPerson,
+            });
+
+            if (!tossClientKey) {
+                setMessage(`주문서가 생성되었습니다. Toss client key 설정 후 결제를 진행하세요. 주문번호: ${prepared.merchantUid}`);
+                return;
+            }
+
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete("paymentKey");
+            currentUrl.searchParams.delete("orderId");
+            currentUrl.searchParams.delete("amount");
+
+            await requestTossPayment({
+                clientKey: tossClientKey,
+                amount: prepared.amount,
+                orderId: prepared.merchantUid,
+                orderName: `${match.title} 참가비`,
+                successUrl: currentUrl.toString(),
+                failUrl: currentUrl.toString(),
+            });
+        } catch (err) {
+            setError(err instanceof ApiError ? err.message : "결제를 시작하지 못했습니다.");
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
     return (
         <div className="mt-6 flex flex-col gap-3">
             {error ? (
@@ -313,18 +382,23 @@ function MatchActions({
                     {error}
                 </div>
             ) : null}
+            {message ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+                    {message}
+                </div>
+            ) : null}
 
             {isHost ? (
                 <div className="flex flex-col gap-2">
                     <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
-                        내가 주최한 매치입니다. 방장 취소 마감 전까지만 매치를 취소할 수 있습니다.
+                        내가 방장인 매치입니다. 방장 취소 마감 전까지만 매치를 취소할 수 있습니다.
                     </p>
                     <Button
                         type="button"
                         loading={submitting}
                         disabled={!cancellableStatus || hostCancelClosed}
                         onClick={() => {
-                            if (!window.confirm("매치를 취소하면 참가자 전원에게 전액 환불 요청이 진행됩니다. 취소할까요?")) return;
+                            if (!window.confirm("매치를 취소하면 참가자 전원에게 환불 요청이 진행됩니다. 취소할까요?")) return;
                             void run(
                                 () => cancelMatch(match.matchId),
                                 "매치 취소에 실패했습니다.",
@@ -338,7 +412,7 @@ function MatchActions({
             ) : myActive ? (
                 <div className="flex flex-col gap-2">
                     <p className="rounded-lg bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-700">
-                        참가 취소 마감 전까지 취소할 수 있으며 전액 환불됩니다.
+                        이미 참가 확정된 매치입니다. 참가 취소 마감 전까지 취소할 수 있습니다.
                     </p>
                     <Button
                         type="button"
@@ -352,7 +426,7 @@ function MatchActions({
                         }
                         className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
                     >
-                        {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 전액 환불"}
+                        {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 환불 요청"}
                     </Button>
                 </div>
             ) : myPaymentPending ? (
@@ -365,20 +439,15 @@ function MatchActions({
                 </p>
             ) : full ? (
                 <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-500">
-                    정원이 가득 찼습니다.
+                    정원이 모두 찼습니다.
                 </p>
             ) : (
                 <Button
                     type="button"
                     loading={submitting}
-                    onClick={() =>
-                        run(async () => {
-                            await joinMatch(match.matchId);
-                            router.refresh();
-                        }, "매치 참여에 실패했습니다.")
-                    }
+                    onClick={() => void startParticipationPayment()}
                 >
-                    매치 참여하기
+                    결제 후 매치 참여하기
                 </Button>
             )}
         </div>

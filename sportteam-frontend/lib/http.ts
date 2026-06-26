@@ -3,7 +3,7 @@ import { getAccessToken } from "./token";
 
 export const API_BASE_URL =
     typeof window === "undefined"
-        ? (process.env.BACKEND_API_URL ?? "http://localhost:8090")
+        ? (process.env.BACKEND_API_URL ?? "http://3.36.243.212")
         : "/backend";
 
 /** 백엔드 error 응답을 그대로 담는 에러 */
