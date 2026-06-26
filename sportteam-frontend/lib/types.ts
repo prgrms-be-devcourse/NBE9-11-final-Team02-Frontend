@@ -391,3 +391,72 @@ export interface ReviewSubmitRequest {
     facilityReview: { rating: number; comment: string } | null;
     participantReviews: Array<{ revieweeId: string; mannerRating: number; skillRating: number }>;
 }
+
+// ---- admin ----
+
+/** GET /api/v1/admin/facilities 의 페이지 항목 */
+export interface AdminFacilityResponse {
+    facilityId: string;
+    managerId: string;
+    name: string;
+    address: string;
+    status: FacilityStatus;
+    sportTypes: SportType[];
+    createdAt: string;
+}
+
+/** GET /api/v1/admin/users (목록·블랙리스트·후보) 의 페이지 항목 */
+export interface AdminUserResponse {
+    userId: string;
+    email: string;
+    nickname: string;
+    role: UserRole;
+    provider: AuthProvider | null;
+    activeRegion: string | null;
+    mannerScore: number | null;
+    skillScore: number | null;
+    mannerReviewCount: number;
+    restricted: boolean;
+    restrictionReason: string | null;
+    restrictedAt: string | null;
+    createdAt: string;
+}
+
+/** PATCH /api/v1/admin/users/{userId}/restriction 요청 */
+export interface AdminUserRestrictionRequest {
+    restricted: boolean;
+    reason?: string;
+}
+
+// ---- settlement ----
+
+/** GET /api/v1/admin/settlements/summary 응답 */
+export interface SettlementSummaryResponse {
+    from: string;
+    to: string;
+    total: {
+        count: number;
+        totalParticipantFee: number;
+        totalPlatformFee: number;
+        totalHostSettlementAmount: number;
+    };
+    breakdown: Array<{
+        sportType: SportType;
+        count: number;
+        totalPlatformFee: number;
+    }>;
+}
+
+/** GET /api/v1/admin/settlements 의 페이지 항목 */
+export interface SettlementItemResponse {
+    id: string;
+    matchId: string;
+    hostId: string;
+    sportType: SportType;
+    totalParticipantFee: number;
+    appliedFeeRate: number;
+    platformFee: number;
+    hostSettlementAmount: number;
+    status: SettlementStatus;
+    createdAt: string;
+}
