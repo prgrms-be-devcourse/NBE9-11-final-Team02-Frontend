@@ -279,6 +279,9 @@ function MatchActions({
     const myActive = participants.some(
         (p) => p.userId === currentUserId && p.status === "ACTIVE",
     );
+    const myPaymentPending = participants.some(
+        (p) => p.userId === currentUserId && p.status === "PAYMENT_PENDING",
+    );
     const full = match.currentCount >= match.capacity;
     const recruiting = match.status === "RECRUITING";
     const cancellableStatus = match.status === "RECRUITING" || match.status === "CONFIRMED";
@@ -286,6 +289,7 @@ function MatchActions({
     const hostCancelClosed = isBeforeNow(match.hostCancelDeadline);
 
     async function run(action: () => Promise<unknown>, fallbackMsg: string) {
+        if (submitting) return;
         setSubmitting(true);
         setError(undefined);
         try {
@@ -351,6 +355,10 @@ function MatchActions({
                         {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 전액 환불"}
                     </Button>
                 </div>
+            ) : myPaymentPending ? (
+                <p className="rounded-lg bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
+                    참가 신청 후 결제가 대기 중입니다. 결제를 완료하거나 잠시 후 다시 확인해주세요.
+                </p>
             ) : !recruiting ? (
                 <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-500">
                     모집이 마감된 매치입니다.
