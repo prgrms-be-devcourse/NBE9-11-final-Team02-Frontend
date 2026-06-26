@@ -4,13 +4,14 @@ import type {
     MatchCreateRequest,
     MatchCreateResponse,
     MatchParticipantResponse,
+    MatchRecommendationResponse,
     MatchSortType,
     MatchStatus,
     MatchSummaryResponse,
     PageResponse,
     RequiredGender,
     SkillLevel,
-    SportType, MatchRecommendationResponse,
+    SportType,
 } from "./types";
 
 /** 시설 슬롯을 홀드하고 새 매치를 생성 */
@@ -52,6 +53,26 @@ export function getMatches(
     );
 }
 
+export interface GetRecommendationsParams {
+    sportType: SportType;
+    gender?: RequiredGender;
+    size?: number;
+}
+
+/** 종목 기반 맞춤 매치 추천 (인증 필요) */
+export function getMatchRecommendations(
+    params: GetRecommendationsParams,
+): Promise<MatchRecommendationResponse[]> {
+    const query = new URLSearchParams({ sportType: params.sportType });
+    if (params.gender) query.set("gender", params.gender);
+    if (params.size) query.set("size", String(params.size));
+
+    return apiFetch<MatchRecommendationResponse[]>(
+        `/api/v1/matches/recommendations?${query.toString()}`,
+        { auth: true },
+    );
+}
+
 /** 매치 상세 조회 */
 export function getMatch(matchId: string): Promise<MatchDetailResponse> {
     return apiFetch<MatchDetailResponse>(`/api/v1/matches/${matchId}`);
@@ -85,30 +106,18 @@ export function leaveMatch(matchId: string): Promise<void> {
     });
 }
 
+/** 방장 매치 확정 (모집 마감 및 확정) */
+export function confirmMatch(matchId: string): Promise<MatchDetailResponse> {
+    return apiFetch<MatchDetailResponse>(`/api/v1/matches/${matchId}/confirm`, {
+        method: "PATCH",
+        auth: true,
+    });
+}
+
 /** 방장 매치 취소 */
 export function cancelMatch(matchId: string): Promise<void> {
     return apiFetch<void>(`/api/v1/matches/${matchId}`, {
         method: "DELETE",
         auth: true,
     });
-}
-
-export interface GetRecommendationsParams {
-    sportType: SportType;
-    gender?: RequiredGender;
-    size?: number;
-}
-
-/** 종목 기반 맞춤 매치 추천 (인증 필요) */
-export function getMatchRecommendations(
-    params: GetRecommendationsParams,
-): Promise<MatchRecommendationResponse[]> {
-    const query = new URLSearchParams({ sportType: params.sportType });
-    if (params.gender) query.set("gender", params.gender);
-    if (params.size) query.set("size", String(params.size));
-
-    return apiFetch<MatchRecommendationResponse[]>(
-        `/api/v1/matches/recommendations?${query.toString()}`,
-        { auth: true },
-    );
 }

@@ -3,19 +3,17 @@
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 import { confirmPayment, prepareParticipationPayment, requestTossPayment } from "@/lib/payment";
 import {
     cancelMatch,
+    confirmMatch,
     getMatch,
     getMatchParticipants,
     leaveMatch,
 } from "@/lib/match";
-import {
-    isBeforeNow,
-} from "@/lib/match-policy";
+import { isBeforeNow } from "@/lib/match-policy";
 import {
     MATCH_STATUS_LABEL,
     REQUIRED_GENDER_LABEL,
@@ -25,7 +23,16 @@ import {
 import type {
     MatchDetailResponse,
     MatchParticipantResponse,
+    SportType,
 } from "@/lib/types";
+
+const SPORT_ICON: Record<SportType, string> = {
+    FUTSAL: "🥅",
+    SOCCER: "⚽",
+    BASKETBALL: "🏀",
+    TENNIS: "🎾",
+    BADMINTON: "🏸",
+};
 
 function formatDateTime(iso: string | null): string {
     if (!iso) return "-";
@@ -46,9 +53,7 @@ export default function MatchDetailPage() {
     const { user } = useAuth();
 
     const [match, setMatch] = useState<MatchDetailResponse>();
-    const [participants, setParticipants] = useState<MatchParticipantResponse[]>(
-        [],
-    );
+    const [participants, setParticipants] = useState<MatchParticipantResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>();
 
@@ -86,161 +91,143 @@ export default function MatchDetailPage() {
     }, [load]);
 
     return (
-        <main className="flex flex-1 flex-col items-center bg-zinc-50 px-4 py-12">
-            <div className="w-full max-w-2xl">
-                <Link
-                    href="/matches"
-                    className="mb-6 inline-block text-sm text-zinc-500 underline-offset-4 hover:underline"
-                >
-                    ← 목록으로
-                </Link>
+        <main className="detail-page">
+            <div className="container">
+                <div className="detail-breadcrumb">
+                    <Link href="/matches">매치 찾기</Link>
+                    <span>/</span>
+                    <b>{match ? match.title : "매치 상세"}</b>
+                </div>
 
                 {loading ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">불러오는 중…</p>
+                    <div className="auth-loading">
+                        <span className="auth-spinner" />
+                    </div>
                 ) : error || !match ? (
-                    <p className="py-12 text-center text-sm text-red-600">
-                        {error ?? "매치 정보를 찾을 수 없습니다."}
-                    </p>
+                    <div className="manager-empty">
+                        <span>!</span>
+                        <h2>매치 정보를 찾을 수 없습니다.</h2>
+                        <p>{error ?? "잠시 후 다시 시도해주세요."}</p>
+                    </div>
                 ) : (
-                    <>
-                        <MatchInfo match={match} />
-                        <ParticipantList
-                            participants={participants}
-                            hostId={match.hostId}
-                        />
+                    <div className="detail-layout">
+                        <div className="detail-main">
+                            <MatchHeading match={match} />
+                            <div className="detail-art">
+                                <i />
+                                <i />
+                                <span>{SPORT_ICON[match.sportType] ?? "🏃"}</span>
+                            </div>
+                            <MatchInfoSection match={match} />
+                            <ParticipantSection
+                                participants={participants}
+                                hostId={match.hostId}
+                            />
+                        </div>
                         <MatchActions
                             match={match}
                             currentUserId={user?.userId}
                             participants={participants}
                             onChanged={load}
                         />
-                    </>
+                    </div>
                 )}
             </div>
         </main>
     );
 }
 
-function MatchInfo({ match }: { match: MatchDetailResponse }) {
-    const full = match.currentCount >= match.capacity;
-
+function MatchHeading({ match }: { match: MatchDetailResponse }) {
     return (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="flex items-start justify-between gap-3">
-                <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                    {match.title}
-                </h1>
-                <span
-                    className={
-                        match.status === "RECRUITING"
-                            ? "shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700"
-                            : "shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600"
-                    }
-                >
-          {MATCH_STATUS_LABEL[match.status]}
-        </span>
+        <div className="detail-heading">
+            <div>
+                <span className="detail-status">{MATCH_STATUS_LABEL[match.status]}</span>
+                <span className="detail-sport">{SPORT_TYPE_LABEL[match.sportType]}</span>
+                <span className="detail-sport">
+                    {REQUIRED_GENDER_LABEL[match.requiredGender]}
+                </span>
+                <span className="detail-sport">
+                    {formatSkillRange(match.minSkillLevel, match.maxSkillLevel)}
+                </span>
             </div>
+            <h1>{match.title}</h1>
+            <p>모집 마감 {formatDateTime(match.recruitDeadline)}</p>
+        </div>
+    );
+}
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-          {SPORT_TYPE_LABEL[match.sportType]}
-        </span>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-          {REQUIRED_GENDER_LABEL[match.requiredGender]}
-        </span>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-          {formatSkillRange(match.minSkillLevel, match.maxSkillLevel)}
-        </span>
-            </div>
-
-            <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-zinc-100 pt-6 text-sm">
-                <InfoItem
-                    label="모집 현황"
-                    value={`${match.currentCount} / ${match.capacity}명`}
-                    highlight={full}
-                />
-                <InfoItem
-                    label="참가비"
-                    value={`${match.feePerPerson.toLocaleString()}원`}
-                />
-                <InfoItem
-                    label="모집 마감"
-                    value={formatDateTime(match.recruitDeadline)}
-                />
-                <InfoItem
-                    label="참가 취소 마감"
-                    value={formatDateTime(match.participantCancelDeadline)}
-                />
-                <InfoItem
-                    label="방장 취소 마감"
-                    value={formatDateTime(match.hostCancelDeadline)}
-                />
+function MatchInfoSection({ match }: { match: MatchDetailResponse }) {
+    return (
+        <div className="detail-section">
+            <h2>매치 정보</h2>
+            <div className="info-grid">
+                <div>
+                    <span>모집 현황</span>
+                    <b>
+                        {match.currentCount} / {match.capacity}명
+                    </b>
+                </div>
+                <div>
+                    <span>참가비</span>
+                    <b>{match.feePerPerson.toLocaleString()}원</b>
+                </div>
+                <div>
+                    <span>모집 마감</span>
+                    <b>{formatDateTime(match.recruitDeadline)}</b>
+                </div>
+                <div>
+                    <span>참가 취소 마감</span>
+                    <b>{formatDateTime(match.participantCancelDeadline)}</b>
+                </div>
+                <div>
+                    <span>방장 취소 마감</span>
+                    <b>{formatDateTime(match.hostCancelDeadline)}</b>
+                </div>
                 {match.confirmedAt ? (
-                    <InfoItem label="확정 시각" value={formatDateTime(match.confirmedAt)} />
+                    <div>
+                        <span>확정 시각</span>
+                        <b>{formatDateTime(match.confirmedAt)}</b>
+                    </div>
                 ) : null}
                 {match.cancelledAt ? (
-                    <InfoItem label="취소 시각" value={formatDateTime(match.cancelledAt)} />
+                    <div>
+                        <span>취소 시각</span>
+                        <b>{formatDateTime(match.cancelledAt)}</b>
+                    </div>
                 ) : null}
-            </dl>
+            </div>
         </div>
     );
 }
 
-function InfoItem({
-                      label,
-                      value,
-                      highlight,
-                  }: {
-    label: string;
-    value: string;
-    highlight?: boolean;
-}) {
-    return (
-        <div className="flex flex-col gap-0.5">
-            <dt className="text-xs text-zinc-500">{label}</dt>
-            <dd
-                className={
-                    highlight ? "font-medium text-red-600" : "font-medium text-zinc-900"
-                }
-            >
-                {value}
-            </dd>
-        </div>
-    );
-}
-
-function ParticipantList({
-                             participants,
-                             hostId,
-                         }: {
+function ParticipantSection({
+                                participants,
+                                hostId,
+                            }: {
     participants: MatchParticipantResponse[];
     hostId: string;
 }) {
     const active = participants.filter((p) => p.status === "ACTIVE");
 
     return (
-        <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="mb-4 text-lg font-semibold text-zinc-900">
-                참가자 ({active.length}명)
-            </h2>
+        <div className="detail-section">
+            <h2>참가자 ({active.length}명)</h2>
             {active.length === 0 ? (
-                <p className="text-sm text-zinc-400">아직 참가자가 없습니다.</p>
+                <p style={{ fontSize: "12px", color: "#939c98" }}>
+                    아직 참가자가 없습니다.
+                </p>
             ) : (
-                <ul className="flex flex-col gap-2">
+                <div className="participant-list">
                     {active.map((p) => (
-                        <li
-                            key={p.participantId}
-                            className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5 text-sm"
-                        >
-              <span className="font-medium text-zinc-900">
-                {p.userId === hostId ? "주최자" : "참가자"}
-              </span>
-                            <span className="text-xs text-zinc-400">
-                {p.userId.slice(0, 8)}…
-              </span>
-                        </li>
+                        <div key={p.participantId}>
+                            <span>{p.userId === hostId ? "H" : "P"}</span>
+                            <div>
+                                <b>{p.userId === hostId ? "주최자" : "참가자"}</b>
+                                <small>{p.userId.slice(0, 8)}…</small>
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     );
@@ -275,7 +262,7 @@ function MatchActions({
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSubmitting(true);
         setError(undefined);
-        confirmPayment({userId: currentUserId, paymentKey, orderId, amount})
+        confirmPayment({ userId: currentUserId, paymentKey, orderId, amount })
             .then(async () => {
                 if (!active) return;
                 setMessage("결제가 완료되었습니다. 참가 상태를 갱신했습니다.");
@@ -295,14 +282,21 @@ function MatchActions({
 
     if (!currentUserId) {
         return (
-            <div className="mt-6">
-                <Link
-                    href={`/login?next=/matches/${match.matchId}`}
-                    className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                >
-                    로그인하고 참여하기
-                </Link>
-            </div>
+            <aside className="join-card">
+                <span>참가비</span>
+                <strong>
+                    {match.feePerPerson.toLocaleString()}
+                    <small>원</small>
+                </strong>
+                <div className="match-actions">
+                    <button
+                        type="button"
+                        onClick={() => router.push(`/login?next=/matches/${match.matchId}`)}
+                    >
+                        로그인하고 참여하기
+                    </button>
+                </div>
+            </aside>
         );
     }
 
@@ -319,6 +313,9 @@ function MatchActions({
     const cancellableStatus = match.status === "RECRUITING" || match.status === "CONFIRMED";
     const participantCancelClosed = isBeforeNow(match.participantCancelDeadline);
     const hostCancelClosed = isBeforeNow(match.hostCancelDeadline);
+    const pct = match.capacity > 0
+        ? Math.min(100, Math.round((match.currentCount / match.capacity) * 100))
+        : 0;
 
     async function run(action: () => Promise<unknown>, fallbackMsg: string) {
         if (submitting) return;
@@ -376,80 +373,109 @@ function MatchActions({
     }
 
     return (
-        <div className="mt-6 flex flex-col gap-3">
-            {error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                    {error}
-                </div>
-            ) : null}
-            {message ? (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
-                    {message}
-                </div>
-            ) : null}
+        <aside className="join-card">
+            <span>참가비</span>
+            <strong>
+                {match.feePerPerson.toLocaleString()}
+                <small>원</small>
+            </strong>
 
-            {isHost ? (
-                <div className="flex flex-col gap-2">
-                    <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-600">
-                        내가 방장인 매치입니다. 방장 취소 마감 전까지만 매치를 취소할 수 있습니다.
-                    </p>
-                    <Button
-                        type="button"
-                        loading={submitting}
-                        disabled={!cancellableStatus || hostCancelClosed}
-                        onClick={() => {
-                            if (!window.confirm("매치를 취소하면 참가자 전원에게 환불 요청이 진행됩니다. 취소할까요?")) return;
-                            void run(
-                                () => cancelMatch(match.matchId),
-                                "매치 취소에 실패했습니다.",
-                            );
-                        }}
-                        className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
-                    >
-                        {hostCancelClosed ? "방장 취소 마감" : "매치 취소"}
-                    </Button>
+            <div className="join-progress">
+                <div>
+                    <span>모집 현황</span>
+                    <span>
+                        {match.currentCount}/{match.capacity}명
+                    </span>
                 </div>
-            ) : myActive ? (
-                <div className="flex flex-col gap-2">
-                    <p className="rounded-lg bg-emerald-50 px-4 py-3 text-center text-sm text-emerald-700">
-                        이미 참가 확정된 매치입니다. 참가 취소 마감 전까지 취소할 수 있습니다.
+                <i>
+                    <em style={{ width: `${pct}%` }} />
+                </i>
+            </div>
+
+            <div className="join-summary">
+                <p>
+                    <span>모집 마감</span>
+                    <b>{formatDateTime(match.recruitDeadline)}</b>
+                </p>
+                <p>
+                    <span>상태</span>
+                    <b>{MATCH_STATUS_LABEL[match.status]}</b>
+                </p>
+            </div>
+
+            {error ? <div className="join-error">{error}</div> : null}
+            {message ? <p className="join-state ok">{message}</p> : null}
+
+            <div className="match-actions">
+                {isHost ? (
+                    <>
+                        {recruiting ? (
+                            <button
+                                type="button"
+                                disabled={submitting}
+                                onClick={() => {
+                                    if (!window.confirm("매치를 확정하면 모집이 마감되어 더 이상 참가 신청을 받지 않습니다. 확정할까요?")) return;
+                                    void run(
+                                        () => confirmMatch(match.matchId),
+                                        "매치 확정에 실패했습니다.",
+                                    );
+                                }}
+                            >
+                                {submitting ? "처리 중…" : "매치 확정 · 모집 마감"}
+                            </button>
+                        ) : null}
+                        <button
+                            type="button"
+                            className="secondary"
+                            disabled={submitting || !cancellableStatus || hostCancelClosed}
+                            onClick={() => {
+                                if (!window.confirm("매치를 취소하면 참가자 전원에게 환불 요청이 진행됩니다. 취소할까요?")) return;
+                                void run(
+                                    () => cancelMatch(match.matchId),
+                                    "매치 취소에 실패했습니다.",
+                                );
+                            }}
+                        >
+                            {hostCancelClosed ? "방장 취소 마감" : "매치 취소"}
+                        </button>
+                        <small>
+                            {recruiting
+                                ? "인원이 모이면 매치를 확정해 모집을 마감하세요."
+                                : "방장 취소 마감 전까지만 취소할 수 있습니다."}
+                        </small>
+                    </>
+                ) : myActive ? (
+                    <>
+                        <button
+                            type="button"
+                            className="secondary"
+                            disabled={submitting || participantCancelClosed}
+                            onClick={() =>
+                                run(() => leaveMatch(match.matchId), "참여 취소에 실패했습니다.")
+                            }
+                        >
+                            {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 환불 요청"}
+                        </button>
+                        <p>이미 참가 확정된 매치입니다.</p>
+                    </>
+                ) : myPaymentPending ? (
+                    <p className="join-state warn">
+                        결제 대기 중입니다. 결제를 완료하거나 잠시 후 다시 확인해주세요.
                     </p>
-                    <Button
+                ) : !recruiting ? (
+                    <p className="join-state muted">모집이 마감된 매치입니다.</p>
+                ) : full ? (
+                    <p className="join-state muted">정원이 모두 찼습니다.</p>
+                ) : (
+                    <button
                         type="button"
-                        loading={submitting}
-                        disabled={participantCancelClosed}
-                        onClick={() =>
-                            run(
-                                () => leaveMatch(match.matchId),
-                                "참여 취소에 실패했습니다.",
-                            )
-                        }
-                        className="bg-white text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50"
+                        disabled={submitting}
+                        onClick={() => void startParticipationPayment()}
                     >
-                        {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 환불 요청"}
-                    </Button>
-                </div>
-            ) : myPaymentPending ? (
-                <p className="rounded-lg bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
-                    참가 신청 후 결제가 대기 중입니다. 결제를 완료하거나 잠시 후 다시 확인해주세요.
-                </p>
-            ) : !recruiting ? (
-                <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-500">
-                    모집이 마감된 매치입니다.
-                </p>
-            ) : full ? (
-                <p className="rounded-lg bg-zinc-100 px-4 py-3 text-center text-sm text-zinc-500">
-                    정원이 모두 찼습니다.
-                </p>
-            ) : (
-                <Button
-                    type="button"
-                    loading={submitting}
-                    onClick={() => void startParticipationPayment()}
-                >
-                    결제 후 매치 참여하기
-                </Button>
-            )}
-        </div>
+                        {submitting ? "처리 중…" : "결제 후 매치 참여하기"}
+                    </button>
+                )}
+            </div>
+        </aside>
     );
 }
