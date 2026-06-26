@@ -13,8 +13,12 @@ export function MatchCard({ match }: { match: MatchSummaryResponse }) {
   const date = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "short" }).format(deadline);
   const time = new Intl.DateTimeFormat("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(deadline);
   const almostFull = match.capacity - match.currentCount <= 2;
+  const statusLabel = match.status === "RECRUITING"
+      ? (almostFull ? "마감 임박" : "모집 중")
+      : match.status === "CONFIRMED" ? "확정"
+          : match.status === "COMPLETED" ? "완료" : "취소됨";
   return <Link className="match-card" href={`/matches/${match.matchId}`}>
-    <div className={`match-art ${sport.className}`}><span>{sport.icon}</span><i className="art-line one"/><i className="art-line two"/><em>{almostFull ? "마감 임박" : "모집 중"}</em></div>
+    <div className={`match-art ${sport.className}`}><span>{sport.icon}</span><i className="art-line one"/><i className="art-line two"/><em>{statusLabel}</em></div>
     <div className="match-body"><div className="match-tags"><span>{sport.label}</span><small>{match.minSkillLevel === "LEVEL_1" ? "초보 환영" : "모든 레벨"}</small></div><h3>{match.title}</h3><dl><div><dt>일시</dt><dd>{date} · {time}</dd></div><div><dt>조건</dt><dd>{match.requiredGender === "ANY" ? "성별 무관" : match.requiredGender === "MALE" ? "남성" : "여성"} · {match.minSkillLevel}~{match.maxSkillLevel}</dd></div></dl><div className="match-bottom"><div className="people"><span/><span/><span/><b>{match.currentCount}/{match.capacity}명</b></div><strong>{match.feePerPerson.toLocaleString()}원</strong></div></div>
   </Link>;
 }
