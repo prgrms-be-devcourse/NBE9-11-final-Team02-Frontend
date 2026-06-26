@@ -271,7 +271,7 @@ export type SkillLevel =
 
 export type RequiredGender = "ANY" | "MALE" | "FEMALE" | "MIXED";
 
-export type MatchParticipantStatus = "ACTIVE" | "CANCELLED";
+export type MatchParticipantStatus = "ACTIVE" | "PAYMENT_PENDING" | "CANCELLED";
 
 export type MatchSortType =
     | "LATEST"
