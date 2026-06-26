@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getFacility, getFacilitySlots } from "@/lib/facility";
 import { ApiError } from "@/lib/http";
+import { getFacilityReviews } from "@/lib/review";
 import { useAuth } from "@/lib/auth-context";
 import { calculateRecruitDeadline, isBeforeNow, parseSlotStartAt } from "@/lib/match-policy";
 import type {
     Amenity,
     FacilityResponse,
+    FacilityReviewResponse,
     FacilitySlotResponse,
+    PageResponse,
     SportType,
 } from "@/lib/types";
 
@@ -88,6 +91,7 @@ export default function FacilityDetailPage() {
                     <>
                         <FacilityInfo facility={facility} />
                         <SlotBrowser facilityId={facilityId} sportType={facility.sportTypes[0]} />
+                        <FacilityReviews facilityId={facilityId} />
                     </>
                 )}
             </div>
@@ -280,6 +284,124 @@ function SlotBrowser({ facilityId, sportType }: { facilityId: string; sportType:
                         );
                     })}
                 </div>
+            )}
+        </div>
+    );
+}
+
+function formatReviewDate(iso: string): string {
+    return iso.slice(0, 10).replace(/-/g, ".");
+}
+
+function Stars({ rating }: { rating: number }) {
+    const filled = Math.round(rating);
+    return (
+        <span className="text-sm font-medium text-amber-500">
+            {"★".repeat(filled)}
+            <span className="text-zinc-300">{"★".repeat(Math.max(0, 5 - filled))}</span>
+            <span className="ml-1.5 text-zinc-700">{rating.toFixed(1)}</span>
+        </span>
+    );
+}
+
+const REVIEW_PAGE_SIZE = 5;
+
+function FacilityReviews({ facilityId }: { facilityId: string }) {
+    const [data, setData] = useState<PageResponse<FacilityReviewResponse>>();
+    const [page, setPage] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string>();
+
+    useEffect(() => {
+        let active = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLoading(true);
+        setError(undefined);
+
+        getFacilityReviews(facilityId, { page, size: REVIEW_PAGE_SIZE })
+            .then((res) => {
+                if (active) setData(res);
+            })
+            .catch((e) => {
+                if (!active) return;
+                setError(
+                    e instanceof ApiError
+                        ? e.message
+                        : "이용 후기를 불러오지 못했습니다.",
+                );
+                setData(undefined);
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [facilityId, page]);
+
+    return (
+        <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-zinc-900">이용 후기</h2>
+                {data && data.totalElements > 0 ? (
+                    <span className="text-sm text-zinc-500">총 {data.totalElements}개</span>
+                ) : null}
+            </div>
+
+            {loading ? (
+                <p className="py-8 text-center text-sm text-zinc-400">불러오는 중…</p>
+            ) : error ? (
+                <p className="py-8 text-center text-sm text-red-600">{error}</p>
+            ) : !data || data.content.length === 0 ? (
+                <p className="py-8 text-center text-sm text-zinc-400">
+                    아직 등록된 후기가 없습니다.
+                </p>
+            ) : (
+                <>
+                    <ul className="flex flex-col divide-y divide-zinc-100">
+                        {data.content.map((review) => (
+                            <li
+                                key={review.reviewId}
+                                className="flex flex-col gap-1.5 py-4 first:pt-0 last:pb-0"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <Stars rating={review.rating} />
+                                    <span className="text-xs text-zinc-400">
+                                        {formatReviewDate(review.createdAt)}
+                                    </span>
+                                </div>
+                                {review.comment ? (
+                                    <p className="text-sm text-zinc-600">{review.comment}</p>
+                                ) : null}
+                            </li>
+                        ))}
+                    </ul>
+
+                    {data.totalPages > 1 ? (
+                        <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+                            <button
+                                type="button"
+                                disabled={data.first}
+                                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                className="rounded-lg border border-zinc-200 px-3 py-1.5 font-medium text-zinc-600 disabled:opacity-40"
+                            >
+                                이전
+                            </button>
+                            <span className="text-zinc-500">
+                                {data.number + 1} / {data.totalPages}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={data.last}
+                                onClick={() => setPage((p) => p + 1)}
+                                className="rounded-lg border border-zinc-200 px-3 py-1.5 font-medium text-zinc-600 disabled:opacity-40"
+                            >
+                                다음
+                            </button>
+                        </div>
+                    ) : null}
+                </>
             )}
         </div>
     );

@@ -480,3 +480,13 @@ export interface MatchRecommendationResponse extends MatchSummaryResponse {
 export interface HealthResponse {
     status: string;
 }
+
+/** GET /api/v1/facilities/{facilityId}/reviews 항목 */
+export interface FacilityReviewResponse {
+    reviewId: string;
+    matchId: string;
+    facilityId: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+}
