@@ -82,3 +82,14 @@ export async function apiFetch<T>(
 
     return (payload?.data ?? null) as T;
 }
+
+/** 정의된 값(undefined·null·빈 문자열 제외)만 모아 쿼리스트링(`?a=1&b=2`)으로 만든다. */
+export function buildQuery(params: object): string {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+        if (value === undefined || value === null || value === "") continue;
+        query.set(key, String(value));
+    }
+    const qs = query.toString();
+    return qs ? `?${qs}` : "";
+}

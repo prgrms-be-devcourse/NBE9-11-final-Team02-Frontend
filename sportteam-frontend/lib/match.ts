@@ -63,6 +63,7 @@ export function getMatchParticipants(
 ): Promise<MatchParticipantResponse[]> {
     return apiFetch<MatchParticipantResponse[]>(
         `/api/v1/matches/${matchId}/participants`,
+        { auth: true },
     );
 }
 

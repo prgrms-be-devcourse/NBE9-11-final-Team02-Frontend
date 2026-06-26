@@ -272,7 +272,7 @@ export type SkillLevel =
 
 export type RequiredGender = "ANY" | "MALE" | "FEMALE" | "MIXED";
 
-export type MatchParticipantStatus = "ACTIVE" | "CANCELLED";
+export type MatchParticipantStatus = "ACTIVE" | "PAYMENT_PENDING" | "CANCELLED";
 
 export type MatchSortType =
     | "LATEST"
@@ -381,7 +381,7 @@ export interface MyRecordResponse {
     sportStats: Array<{ sportType: SportType; count: number }>;
     monthlyStats: Array<{ year: number; month: number; count: number }>;
     mannerStat: { mannerScore: number; mannerReviewCount: number };
-    skillStats: Array<{ sportType: SportType; position?: string | null; skillRating: number; reviewCount: number }>;
+    skillStats: Array<{ sportType: SportType; skillRating: number; reviewCount: number }>;
 }
 
 export interface NotificationResponse {
@@ -401,6 +401,20 @@ export interface ReviewSubmitRequest {
     participantReviews: Array<{ revieweeId: string; mannerRating: number; skillRating: number }>;
 }
 
+// ---- admin ----
+
+/** GET /api/v1/admin/facilities 의 페이지 항목 */
+export interface AdminFacilityResponse {
+    facilityId: string;
+    managerId: string;
+    name: string;
+    address: string;
+    status: FacilityStatus;
+    sportTypes: SportType[];
+    createdAt: string;
+}
+
+/** GET /api/v1/admin/users (목록·블랙리스트·후보) 의 페이지 항목 */
 export interface AdminUserResponse {
     userId: string;
     email: string;
@@ -417,6 +431,41 @@ export interface AdminUserResponse {
     createdAt: string;
 }
 
-export interface HealthResponse {
-    status: string;
+/** PATCH /api/v1/admin/users/{userId}/restriction 요청 */
+export interface AdminUserRestrictionRequest {
+    restricted: boolean;
+    reason?: string;
+}
+
+// ---- settlement ----
+
+/** GET /api/v1/admin/settlements/summary 응답 */
+export interface SettlementSummaryResponse {
+    from: string;
+    to: string;
+    total: {
+        count: number;
+        totalParticipantFee: number;
+        totalPlatformFee: number;
+        totalHostSettlementAmount: number;
+    };
+    breakdown: Array<{
+        sportType: SportType;
+        count: number;
+        totalPlatformFee: number;
+    }>;
+}
+
+/** GET /api/v1/admin/settlements 의 페이지 항목 */
+export interface SettlementItemResponse {
+    id: string;
+    matchId: string;
+    hostId: string;
+    sportType: SportType;
+    totalParticipantFee: number;
+    appliedFeeRate: number;
+    platformFee: number;
+    hostSettlementAmount: number;
+    status: SettlementStatus;
+    createdAt: string;
 }

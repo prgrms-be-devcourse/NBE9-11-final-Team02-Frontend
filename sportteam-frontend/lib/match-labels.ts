@@ -1,9 +1,12 @@
 import type {
+    FacilityStatus,
     MatchSortType,
     MatchStatus,
     RequiredGender,
+    SettlementStatus,
     SkillLevel,
     SportType,
+    UserRole,
 } from "./types";
 
 export const SPORT_TYPE_LABEL: Record<SportType, string> = {
@@ -42,6 +45,23 @@ export const MATCH_SORT_LABEL: Record<MatchSortType, string> = {
     DEADLINE_ASC: "마감 임박순",
     FEE_ASC: "참가비 낮은순",
     PARTICIPANT_DESC: "참여 많은순",
+};
+
+export const USER_ROLE_LABEL: Record<UserRole, string> = {
+    USER: "일반 회원",
+    MANAGER: "경기장 관리자",
+    ADMIN: "운영자",
+};
+
+export const FACILITY_STATUS_LABEL: Record<FacilityStatus, string> = {
+    ACTIVE: "운영 중",
+    CLOSED: "운영 종료",
+};
+
+export const SETTLEMENT_STATUS_LABEL: Record<SettlementStatus, string> = {
+    HOLDING: "정산 대기",
+    SETTLED: "정산 완료",
+    FAILED: "정산 실패",
 };
 
 /** 모집 레벨 범위를 사람이 읽을 수 있는 문자열로 */
