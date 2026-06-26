@@ -72,6 +72,7 @@ function handleSearch(e: React.FormEvent) {
         <main className="listing-page">
             <section className="listing-hero facility-listing-hero">
                 <div className="container">
+                    <Link href="/" className="listing-back-home">← 메인으로</Link>
                     <span className="eyebrow coral"><i /> FACILITY</span>
                     <h1>우리 팀에 맞는<br /><strong>경기장 찾기</strong></h1>
                     <p>종목, 지역, 날짜를 기준으로 예약 가능한 경기장을 확인하세요.</p>
