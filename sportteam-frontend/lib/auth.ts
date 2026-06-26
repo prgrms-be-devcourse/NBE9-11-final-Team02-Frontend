@@ -62,3 +62,9 @@ export function updateMyProfile(
         auth: true,
     });
 }
+
+/** 회원 탈퇴 — 계정 삭제 성공 시 로컬 토큰 제거 */
+export async function deleteAccount(): Promise<void> {
+    await apiFetch<void>("/api/v1/users/me", { method: "DELETE", auth: true });
+    clearAccessToken();
+}

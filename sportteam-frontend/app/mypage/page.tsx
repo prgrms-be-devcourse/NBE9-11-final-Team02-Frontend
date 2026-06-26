@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button, Field, FormError, Input } from "@/components/ui";
-import { updateMyProfile } from "@/lib/auth";
+import { deleteAccount, updateMyProfile } from "@/lib/auth";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 import type { UserProfile, UserProfileUpdateRequest } from "@/lib/types";
@@ -19,6 +19,29 @@ export default function MyPage() {
     const router = useRouter();
     const { user, loading, refreshProfile } = useAuth();
     const [editing, setEditing] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string>();
+
+    async function handleDeleteAccount() {
+        if (
+            !window.confirm(
+                "회원 탈퇴 시 계정과 관련 정보가 삭제되며 복구할 수 없습니다. 정말 탈퇴하시겠어요?",
+            )
+        ) {
+            return;
+        }
+        setDeleting(true);
+        setDeleteError(undefined);
+        try {
+            await deleteAccount();
+            window.location.href = "/";
+        } catch (e) {
+            setDeleteError(
+                e instanceof ApiError ? e.message : "회원 탈퇴에 실패했습니다.",
+            );
+            setDeleting(false);
+        }
+    }
 
     // 미로그인 시 로그인 페이지로 (로그인 후 돌아오도록 next 지정)
     useEffect(() => {
@@ -72,6 +95,21 @@ export default function MyPage() {
                     <Link href="/mypage/records" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">플레이 기록 <span className="mt-1 block text-xs font-normal text-zinc-400">경기·평가 통계</span></Link>
                     <Link href="/mypage/reviews" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">내 후기 <span className="mt-1 block text-xs font-normal text-zinc-400">작성한 시설 후기</span></Link>
                     <Link href="/notifications" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">알림 <span className="mt-1 block text-xs font-normal text-zinc-400">진행 상황 확인</span></Link>
+                    <Link href="/notifications" className="rounded-xl border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-800 transition hover:border-emerald-400">알림 <span className="mt-1 block text-xs font-normal text-zinc-400">진행 상황 확인</span></Link>
+                </div>
+
+                <div className="mt-8 border-t border-zinc-100 pt-6">
+                    {deleteError ? (
+                        <p className="mb-3 text-sm text-red-600">{deleteError}</p>
+                    ) : null}
+                    <button
+                        type="button"
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                        className="text-sm font-medium text-red-500 underline-offset-4 hover:underline disabled:opacity-50"
+                    >
+                        {deleting ? "탈퇴 처리 중…" : "회원 탈퇴"}
+                    </button>
                 </div>
             </div>
         </main>
