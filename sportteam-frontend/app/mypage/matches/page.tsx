@@ -86,120 +86,71 @@ export default function MyMatchesPage() {
             page,
             size: PAGE_SIZE,
         })
-            .then((res) => {
-                if (active) setData(res);
-            })
+            .then((res) => { if (active) setData(res); })
             .catch((err) => {
                 if (!active) return;
-                setError(
-                    err instanceof ApiError
-                        ? err.message
-                        : "매치 목록을 불러오지 못했습니다.",
-                );
+                setError(err instanceof ApiError ? err.message : "매치 목록을 불러오지 못했습니다.");
             })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
+            .finally(() => { if (active) setLoading(false); });
 
-        return () => {
-            active = false;
-        };
+        return () => { active = false; };
     }, [user, sportType, myMatchStatus, role, page]);
 
     if (authLoading || !user) {
-        return (
-            <main className="flex flex-1 items-center justify-center bg-zinc-50">
-                <p className="text-sm text-zinc-400">불러오는 중…</p>
-            </main>
-        );
+        return <main className="auth-loading"><span className="auth-spinner" /></main>;
     }
 
     return (
-        <main className="flex flex-1 flex-col items-center bg-zinc-50 px-4 py-12">
-            <div className="w-full max-w-3xl">
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                        내 매치 목록
-                    </h1>
-                    <Link
-                        href="/mypage"
-                        className="text-sm text-zinc-500 underline-offset-4 hover:underline"
-                    >
-                        마이페이지로
-                    </Link>
+        <main className="flow-page">
+            <div className="flow-shell" style={{ maxWidth: 760 }}>
+                <Link href="/mypage" className="flow-back">← 마이페이지</Link>
+                <div className="flow-heading">
+                    <span>MY MATCHES</span>
+                    <h1>내 매치 목록</h1>
+                    <p>참가하거나 주최한 매치를 확인하세요.</p>
                 </div>
 
-                <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row">
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            종목
-                        </label>
-                        <Select
-                            value={sportType}
-                            onChange={(e) => {
-                                setSportType(e.target.value as SportType | "");
-                                setPage(0);
-                            }}
-                        >
+                <div className="reservation-filter">
+                    <label>
+                        <span style={{ display: "block", fontSize: 10, color: "var(--muted)", fontWeight: 800, marginBottom: 6 }}>종목</span>
+                        <Select value={sportType} onChange={(e) => { setSportType(e.target.value as SportType | ""); setPage(0); }}>
                             <option value="">전체</option>
-                            {Object.entries(SPORT_TYPE_LABEL).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
+                            {Object.entries(SPORT_TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </Select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            상태
-                        </label>
-                        <Select
-                            value={myMatchStatus}
-                            onChange={(e) => {
-                                setMyMatchStatus(e.target.value as MyMatchStatus | "");
-                                setPage(0);
-                            }}
-                        >
+                    </label>
+                    <label>
+                        <span style={{ display: "block", fontSize: 10, color: "var(--muted)", fontWeight: 800, marginBottom: 6 }}>상태</span>
+                        <Select value={myMatchStatus} onChange={(e) => { setMyMatchStatus(e.target.value as MyMatchStatus | ""); setPage(0); }}>
                             <option value="">전체</option>
-                            {Object.entries(MATCH_STATUS_LABEL).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
+                            {Object.entries(MATCH_STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </Select>
-                    </div>
-                    <div className="flex-1">
-                        <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                            역할
-                        </label>
-                        <Select
-                            value={role}
-                            onChange={(e) => {
-                                setRole(e.target.value as MatchParticipantRole | "");
-                                setPage(0);
-                            }}
-                        >
+                    </label>
+                    <label>
+                        <span style={{ display: "block", fontSize: 10, color: "var(--muted)", fontWeight: 800, marginBottom: 6 }}>역할</span>
+                        <Select value={role} onChange={(e) => { setRole(e.target.value as MatchParticipantRole | ""); setPage(0); }}>
                             <option value="">전체</option>
-                            {Object.entries(ROLE_LABEL).map(([value, label]) => (
-                                <option key={value} value={value}>
-                                    {label}
-                                </option>
-                            ))}
+                            {Object.entries(ROLE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </Select>
-                    </div>
+                    </label>
                 </div>
 
                 {loading ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">불러오는 중…</p>
+                    <div className="auth-loading" style={{ minHeight: "30vh" }}><span className="auth-spinner" /></div>
                 ) : error ? (
-                    <p className="py-12 text-center text-sm text-red-600">{error}</p>
+                    <div className="manager-empty">
+                        <span>!</span>
+                        <h2>매치 목록을 불러오지 못했습니다.</h2>
+                        <p>{error}</p>
+                    </div>
                 ) : !data || data.content.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">
-                        참여한 매치가 없습니다.
-                    </p>
+                    <div className="manager-empty">
+                        <span>⌕</span>
+                        <h2>참여한 매치가 없습니다.</h2>
+                        <p>필터를 바꿔서 다시 조회해보세요.</p>
+                    </div>
                 ) : (
                     <>
-                        <div className="flex flex-col gap-3">
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                             {data.content.map((match) => (
                                 <MatchCard
                                     key={match.matchId}
@@ -213,12 +164,7 @@ export default function MyMatchesPage() {
                                 />
                             ))}
                         </div>
-
-                        <Pagination
-                            page={data.number}
-                            totalPages={data.totalPages}
-                            onChange={setPage}
-                        />
+                        <Pagination page={data.number} totalPages={data.totalPages} onChange={setPage} />
                     </>
                 )}
             </div>
@@ -226,61 +172,43 @@ export default function MyMatchesPage() {
     );
 }
 
-function MatchCard({
-                       match,
-                       expanded,
-                       onToggle,
-                   }: {
-    match: MyMatchResponse;
-    expanded: boolean;
-    onToggle: () => void;
-}) {
+function MatchCard({ match, expanded, onToggle }: { match: MyMatchResponse; expanded: boolean; onToggle: () => void }) {
     const startAt = parseSlotStartAt(match.matchDate, match.startTime);
     const participantCancelDeadline = startAt ? calculateParticipantCancelDeadline(startAt) : null;
 
+    const statusClass =
+        match.myMatchStatus === "PARTICIPATING" ? "pill green" :
+        match.myMatchStatus === "COMPLETED" ? "pill" : "pill red";
+
     return (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <button
-                type="button"
-                onClick={onToggle}
-                className="flex w-full items-center justify-between text-left"
-            >
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        <h2 className="font-semibold text-zinc-900">{match.title}</h2>
-                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-              {SPORT_TYPE_LABEL[match.sportType]}
-            </span>
-                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-              {ROLE_LABEL[match.role]}
-            </span>
+        <div className="record-panel" style={{ marginBottom: 0 }}>
+            <button type="button" onClick={onToggle} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}>
+                <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                        <b style={{ fontSize: 14 }}>{match.title}</b>
+                        <span className="pill" style={{ background: "#f0f2f0", color: "#66736e" }}>{SPORT_TYPE_LABEL[match.sportType]}</span>
+                        <span className="pill" style={{ background: "#f0f2f0", color: "#66736e" }}>{ROLE_LABEL[match.role]}</span>
                     </div>
-                    <p className="text-sm text-zinc-500">
-                        {match.matchDate} {match.startTime.slice(0, 5)} ~{" "}
-                        {match.endTime.slice(0, 5)}
+                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
+                        {match.matchDate} {match.startTime.slice(0, 5)} ~ {match.endTime.slice(0, 5)}
                     </p>
                     {match.myMatchStatus === "PARTICIPATING" ? (
-                        <p className="text-xs text-emerald-700">
-                            참여 취소 가능 마감: {formatPolicyDateTime(participantCancelDeadline)} · 마감 전 전액 환불
+                        <p style={{ fontSize: 11, color: "var(--green)", margin: "4px 0 0" }}>
+                            취소 가능 마감: {formatPolicyDateTime(participantCancelDeadline)} · 마감 전 전액 환불
                         </p>
                     ) : null}
                 </div>
-                <span
-                    className={
-                        match.myMatchStatus === "PARTICIPATING"
-                            ? "rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700"
-                            : match.myMatchStatus === "COMPLETED"
-                                ? "rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600"
-                                : "rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700"
-                    }
-                >
-          {MATCH_STATUS_LABEL[match.myMatchStatus]}
-        </span>
+                <span className={statusClass}>{MATCH_STATUS_LABEL[match.myMatchStatus]}</span>
             </button>
 
             {expanded ? <MatchPaymentDetail matchId={match.matchId} /> : null}
             {match.myMatchStatus === "COMPLETED" ? (
-                <Link href={`/matches/${match.matchId}/review`} className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100">리뷰 작성하기</Link>
+                <Link
+                    href={`/matches/${match.matchId}/review`}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 12, padding: "10px", border: "1px solid #bfe2cd", borderRadius: 7, background: "#e8f5ed", fontSize: 12, fontWeight: 800, color: "var(--green)" }}
+                >
+                    리뷰 작성하기
+                </Link>
             ) : null}
         </div>
     );
@@ -298,159 +226,57 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
         setError(undefined);
 
         getMatchPayment(matchId)
-            .then((res) => {
-                if (active) setPayment(res);
-            })
+            .then((res) => { if (active) setPayment(res); })
             .catch((err) => {
                 if (!active) return;
-                setError(
-                    err instanceof ApiError
-                        ? err.message
-                        : "결제 내역을 불러오지 못했습니다.",
-                );
+                setError(err instanceof ApiError ? err.message : "결제 내역을 불러오지 못했습니다.");
             })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
+            .finally(() => { if (active) setLoading(false); });
 
-        return () => {
-            active = false;
-        };
+        return () => { active = false; };
     }, [matchId]);
 
-    if (loading) {
-        return (
-            <p className="mt-4 border-t border-zinc-100 pt-4 text-sm text-zinc-400">
-                결제 내역 불러오는 중…
-            </p>
-        );
-    }
-
-    if (error || !payment) {
-        return (
-            <p className="mt-4 border-t border-zinc-100 pt-4 text-sm text-red-600">
-                {error ?? "결제 내역이 없습니다."}
-            </p>
-        );
-    }
+    if (loading) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--muted)" }}>결제 내역 불러오는 중…</p>;
+    if (error || !payment) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--coral)" }}>{error ?? "결제 내역이 없습니다."}</p>;
 
     return (
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-zinc-100 pt-4 text-sm">
+        <div className="manager-readonly" style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {payment.hostDetail ? (
                 <>
-                    <PaymentItem
-                        label="시설 결제 금액"
-                        value={`${payment.hostDetail.facilityPaymentAmount.toLocaleString()}원`}
-                    />
-                    <PaymentItem
-                        label="결제 상태"
-                        value={PAYMENT_STATUS_LABEL[payment.hostDetail.facilityPaymentStatus]}
-                    />
-                    <PaymentItem
-                        label="환불 시각"
-                        value={formatNullableDateTime(payment.hostDetail.refundedAt)}
-                    />
-                    <PaymentItem
-                        label="환불 사유"
-                        value={payment.hostDetail.refundReason ?? "-"}
-                    />
-                    <PaymentItem
-                        label="정산 금액"
-                        value={
-                            payment.hostDetail.hostSettlementAmount != null
-                                ? `${payment.hostDetail.hostSettlementAmount.toLocaleString()}원`
-                                : "-"
-                        }
-                    />
-                    <PaymentItem
-                        label="정산 상태"
-                        value={
-                            payment.hostDetail.settlementStatus
-                                ? SETTLEMENT_STATUS_LABEL[payment.hostDetail.settlementStatus]
-                                : "-"
-                        }
-                    />
+                    <PaymentItem label="시설 결제 금액" value={`${payment.hostDetail.facilityPaymentAmount.toLocaleString()}원`} />
+                    <PaymentItem label="결제 상태" value={PAYMENT_STATUS_LABEL[payment.hostDetail.facilityPaymentStatus]} />
+                    <PaymentItem label="환불 사유" value={payment.hostDetail.refundReason ?? "-"} />
+                    <PaymentItem label="정산 금액" value={payment.hostDetail.hostSettlementAmount != null ? `${payment.hostDetail.hostSettlementAmount.toLocaleString()}원` : "-"} />
+                    <PaymentItem label="정산 상태" value={payment.hostDetail.settlementStatus ? SETTLEMENT_STATUS_LABEL[payment.hostDetail.settlementStatus] : "-"} />
                 </>
             ) : null}
-
             {payment.participantDetail ? (
                 <>
-                    <PaymentItem
-                        label="참가비"
-                        value={`${payment.participantDetail.amount.toLocaleString()}원`}
-                    />
-                    <PaymentItem
-                        label="결제 상태"
-                        value={PAYMENT_STATUS_LABEL[payment.participantDetail.status]}
-                    />
-                    <PaymentItem
-                        label="환불 시각"
-                        value={formatNullableDateTime(payment.participantDetail.refundedAt)}
-                    />
-                    <PaymentItem
-                        label="환불 사유"
-                        value={payment.participantDetail.refundReason ?? "-"}
-                    />
+                    <PaymentItem label="참가비" value={`${payment.participantDetail.amount.toLocaleString()}원`} />
+                    <PaymentItem label="결제 상태" value={PAYMENT_STATUS_LABEL[payment.participantDetail.status]} />
+                    <PaymentItem label="환불 사유" value={payment.participantDetail.refundReason ?? "-"} />
                 </>
             ) : null}
-        </dl>
-    );
-}
-
-function formatNullableDateTime(value: string | null) {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function PaymentItem({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="flex flex-col gap-0.5">
-            <dt className="text-xs text-zinc-500">{label}</dt>
-            <dd className="font-medium text-zinc-900">{value}</dd>
         </div>
     );
 }
 
-function Pagination({
-                        page,
-                        totalPages,
-                        onChange,
-                    }: {
-    page: number;
-    totalPages: number;
-    onChange: (page: number) => void;
-}) {
-    if (totalPages <= 1) return null;
-
+function PaymentItem({ label, value }: { label: string; value: string }) {
     return (
-        <div className="mt-8 flex items-center justify-center gap-2">
-            <button
-                type="button"
-                disabled={page === 0}
-                onClick={() => onChange(page - 1)}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-                이전
-            </button>
-            <span className="text-sm text-zinc-600">
-        {page + 1} / {totalPages}
-      </span>
-            <button
-                type="button"
-                disabled={page >= totalPages - 1}
-                onClick={() => onChange(page + 1)}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-                다음
-            </button>
+        <div>
+            <span>{label}</span>
+            <b>{value}</b>
+        </div>
+    );
+}
+
+function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (page: number) => void }) {
+    if (totalPages <= 1) return null;
+    return (
+        <div className="pagination">
+            <button type="button" disabled={page === 0} onClick={() => onChange(page - 1)}>이전</button>
+            <span>{page + 1} / {totalPages}</span>
+            <button type="button" disabled={page >= totalPages - 1} onClick={() => onChange(page + 1)}>다음</button>
         </div>
     );
 }

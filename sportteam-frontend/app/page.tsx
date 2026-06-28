@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { FacilityCard } from "@/components/facility-card";
-import { Header } from "@/components/header";
 import { MatchCard } from "@/components/match-card";
 import { getAvailableFacilities, getMatches } from "@/lib/api";
 
@@ -22,7 +21,6 @@ export default async function Home() {
 
   return (
     <>
-      <Header />
       <main>
         <section className="hero">
           <div className="hero-orbit orbit-one" />

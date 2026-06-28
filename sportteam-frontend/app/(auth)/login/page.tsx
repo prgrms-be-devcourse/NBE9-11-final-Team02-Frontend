@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { Button, Field, FormError, Input } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 
@@ -39,60 +38,64 @@ function LoginForm() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold text-zinc-900">로그인</h1>
-                <p className="text-sm text-zinc-500">SportTeam 계정으로 로그인하세요.</p>
-            </div>
-
-            {justRegistered ? (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
-                    회원가입이 완료되었습니다. 로그인해주세요.
+        <main className="listing-page">
+            <section className="listing-hero">
+                <div className="container">
+                    <Link href="/" className="listing-back-home">← 메인으로</Link>
+                    <span className="eyebrow"><i /> ACCOUNT</span>
+                    <h1>다시 만나서<br /><strong>반가워요!</strong></h1>
+                    <p>플레이온 계정으로 로그인하고 팀을 찾아보세요.</p>
                 </div>
-            ) : null}
+            </section>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-                <FormError message={error} />
-
-                <Field label="이메일" htmlFor="email">
-                    <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Field label="비밀번호" htmlFor="password">
-                    <Input
-                        id="password"
-                        type="password"
-                        autoComplete="current-password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Button type="submit" loading={submitting}>
-                    로그인
-                </Button>
-            </form>
-
-            <p className="text-center text-sm text-zinc-500">
-                아직 계정이 없으신가요?{" "}
-                <Link
-                    href="/signup"
-                    className="font-medium text-zinc-900 underline-offset-4 hover:underline"
-                >
-                    회원가입
-                </Link>
-            </p>
-        </div>
+            <section className="listing-content">
+                <div className="container">
+                    <div className="listing-form-card">
+                        <h2>로그인</h2>
+                        <p>플레이온 계정으로 로그인하세요.</p>
+                        {justRegistered ? (
+                            <p className="form-message" style={{ color: "var(--green)" }}>
+                                회원가입이 완료되었습니다. 로그인해주세요.
+                            </p>
+                        ) : null}
+                        {error ? <p className="form-message">{error}</p> : null}
+                        <form onSubmit={handleSubmit} className="auth-form" noValidate>
+                            <label htmlFor="email">
+                                이메일
+                                <input
+                                    id="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </label>
+                            <label htmlFor="password">
+                                비밀번호
+                                <input
+                                    id="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                            </label>
+                            <button type="submit" className="auth-submit" disabled={submitting}>
+                                {submitting ? "로그인 중…" : "로그인"}
+                            </button>
+                        </form>
+                        <p className="auth-switch">
+                            아직 계정이 없으신가요?{" "}
+                            <Link href="/signup">회원가입</Link>
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
     );
 }
 

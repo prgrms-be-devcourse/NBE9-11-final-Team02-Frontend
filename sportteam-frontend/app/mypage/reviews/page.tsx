@@ -14,10 +14,10 @@ function formatDate(iso: string): string {
 function Stars({ rating }: { rating: number }) {
     const filled = Math.round(rating);
     return (
-        <span className="text-sm font-medium text-amber-500">
+        <span className="rating">
             {"★".repeat(filled)}
-            <span className="text-zinc-300">{"★".repeat(Math.max(0, 5 - filled))}</span>
-            <span className="ml-1.5 text-zinc-700">{rating.toFixed(1)}</span>
+            <span style={{ color: "#dde5df" }}>{"★".repeat(Math.max(0, 5 - filled))}</span>
+            <b style={{ marginLeft: 6 }}>{rating.toFixed(1)}</b>
         </span>
     );
 }
@@ -36,80 +36,62 @@ export default function MyFacilityReviewsPage() {
         setError(undefined);
 
         getMyFacilityReviews(user.userId)
-            .then((res) => {
-                if (active) setItems(res);
-            })
+            .then((res) => { if (active) setItems(res); })
             .catch((e) => {
                 if (!active) return;
-                setError(
-                    e instanceof ApiError
-                        ? e.message
-                        : "내 후기를 불러오지 못했습니다.",
-                );
+                setError(e instanceof ApiError ? e.message : "내 후기를 불러오지 못했습니다.");
                 setItems(undefined);
             })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
+            .finally(() => { if (active) setLoading(false); });
 
-        return () => {
-            active = false;
-        };
+        return () => { active = false; };
     }, [user]);
 
     return (
-        <main className="flex flex-1 flex-col items-center bg-zinc-50 px-4 py-12">
-            <div className="w-full max-w-2xl">
-                <Link
-                    href="/mypage"
-                    className="mb-6 inline-block text-sm text-zinc-500 underline-offset-4 hover:underline"
-                >
-                    ← 마이페이지
-                </Link>
-                <h1 className="mb-1 text-2xl font-bold tracking-tight text-zinc-900">
-                    내가 쓴 시설 후기
-                </h1>
-                <p className="mb-6 text-sm text-zinc-500">
-                    완료된 매치에서 작성한 경기장 후기예요.
-                </p>
+        <main className="flow-page">
+            <div className="flow-shell records-shell">
+                <Link href="/mypage" className="flow-back">← 마이페이지</Link>
+                <div className="flow-heading">
+                    <span>MY REVIEWS</span>
+                    <h1>내가 쓴 시설 후기</h1>
+                    <p>완료된 매치에서 작성한 경기장 후기예요.</p>
+                </div>
 
                 {loading ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">
-                        불러오는 중…
-                    </p>
+                    <div className="auth-loading" style={{ minHeight: "30vh" }}><span className="auth-spinner" /></div>
                 ) : error ? (
-                    <p className="py-12 text-center text-sm text-red-600">{error}</p>
+                    <div className="manager-empty">
+                        <span>!</span>
+                        <h2>후기를 불러오지 못했습니다.</h2>
+                        <p>{error}</p>
+                    </div>
                 ) : !items || items.length === 0 ? (
-                    <p className="py-12 text-center text-sm text-zinc-400">
-                        아직 작성한 시설 후기가 없습니다.
-                    </p>
+                    <div className="manager-empty">
+                        <span>✍</span>
+                        <h2>아직 작성한 시설 후기가 없습니다.</h2>
+                        <p>완료된 매치에서 후기를 남겨보세요.</p>
+                        <Link href="/mypage/matches">내 매치 보기</Link>
+                    </div>
                 ) : (
-                    <ul className="flex flex-col gap-3">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {items.map((review) => (
-                            <li
-                                key={review.reviewId}
-                                className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
-                            >
-                                <div className="flex items-center justify-between gap-2">
+                            <div key={review.reviewId} className="review-panel">
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                                     <Stars rating={review.rating} />
-                                    <span className="text-xs text-zinc-400">
-                                        {formatDate(review.createdAt)}
-                                    </span>
+                                    <span style={{ fontSize: 10, color: "var(--muted)" }}>{formatDate(review.createdAt)}</span>
                                 </div>
                                 {review.comment ? (
-                                    <p className="mt-2 text-sm text-zinc-600">
-                                        {review.comment}
-                                    </p>
+                                    <p style={{ marginTop: 10, fontSize: 13, color: "var(--ink)", lineHeight: 1.7 }}>{review.comment}</p>
                                 ) : null}
                                 <Link
                                     href={`/facilities/${review.facilityId}`}
-                                    className="mt-3 inline-block text-xs font-medium text-emerald-600 underline-offset-4 hover:underline"
+                                    style={{ display: "inline-block", marginTop: 12, fontSize: 11, fontWeight: 800, color: "var(--green)" }}
                                 >
                                     경기장 보기 →
                                 </Link>
-                            </li>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 )}
             </div>
         </main>

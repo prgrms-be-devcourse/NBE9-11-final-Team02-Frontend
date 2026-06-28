@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Field, FormError, Input, Select } from "@/components/ui";
 import { signup } from "@/lib/auth";
 import { ApiError } from "@/lib/http";
 import type { UserRole } from "@/lib/types";
@@ -38,6 +37,12 @@ function validate(
     }
     return errors;
 }
+
+const fieldErrorStyle: React.CSSProperties = {
+    fontSize: 11,
+    color: "var(--coral)",
+    marginTop: -4,
+};
 
 export default function SignupPage() {
     const router = useRouter();
@@ -76,92 +81,97 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold text-zinc-900">회원가입</h1>
-                <p className="text-sm text-zinc-500">SportTeam 계정을 만들어보세요.</p>
-            </div>
+        <main className="listing-page">
+            <section className="listing-hero">
+                <div className="container">
+                    <Link href="/" className="listing-back-home">← 메인으로</Link>
+                    <span className="eyebrow"><i /> SIGN UP</span>
+                    <h1>함께 뛸 준비,<br /><strong>회원가입</strong></h1>
+                    <p>계정을 만들고 가까운 경기장에서 매치를 시작해보세요.</p>
+                </div>
+            </section>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-                <FormError message={error} />
-
-                <Field label="이메일" htmlFor="email" error={fieldErrors.email}>
-                    <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Field label="비밀번호" htmlFor="password" error={fieldErrors.password}>
-                    <Input
-                        id="password"
-                        type="password"
-                        autoComplete="new-password"
-                        placeholder="8자 이상 64자 이하"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Field
-                    label="비밀번호 확인"
-                    htmlFor="passwordConfirm"
-                    error={fieldErrors.passwordConfirm}
-                >
-                    <Input
-                        id="passwordConfirm"
-                        type="password"
-                        autoComplete="new-password"
-                        placeholder="비밀번호를 다시 입력하세요"
-                        value={passwordConfirm}
-                        onChange={(e) => setPasswordConfirm(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Field label="닉네임" htmlFor="nickname" error={fieldErrors.nickname}>
-                    <Input
-                        id="nickname"
-                        type="text"
-                        autoComplete="nickname"
-                        placeholder="닉네임"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        required
-                    />
-                </Field>
-
-                <Field label="회원 유형" htmlFor="role">
-                    <Select
-                        id="role"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value as UserRole)}
-                    >
-                        <option value="USER">일반 회원</option>
-                        <option value="MANAGER">시설 관리자</option>
-                    </Select>
-                </Field>
-
-                <Button type="submit" loading={submitting}>
-                    회원가입
-                </Button>
-            </form>
-
-            <p className="text-center text-sm text-zinc-500">
-                이미 계정이 있으신가요?{" "}
-                <Link
-                    href="/login"
-                    className="font-medium text-zinc-900 underline-offset-4 hover:underline"
-                >
-                    로그인
-                </Link>
-            </p>
-        </div>
+            <section className="listing-content">
+                <div className="container">
+                    <div className="listing-form-card">
+                        <h2>회원가입</h2>
+                        <p>플레이온 계정을 만들어보세요.</p>
+                        {error ? <p className="form-message">{error}</p> : null}
+                        <form onSubmit={handleSubmit} className="auth-form" noValidate>
+                            <label htmlFor="email">
+                                이메일
+                                <input
+                                    id="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                                {fieldErrors.email ? <span style={fieldErrorStyle}>{fieldErrors.email}</span> : null}
+                            </label>
+                            <label htmlFor="password">
+                                비밀번호
+                                <input
+                                    id="password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    placeholder="8자 이상 64자 이하"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                {fieldErrors.password ? <span style={fieldErrorStyle}>{fieldErrors.password}</span> : null}
+                            </label>
+                            <label htmlFor="passwordConfirm">
+                                비밀번호 확인
+                                <input
+                                    id="passwordConfirm"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    placeholder="비밀번호를 다시 입력하세요"
+                                    value={passwordConfirm}
+                                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                                    required
+                                />
+                                {fieldErrors.passwordConfirm ? <span style={fieldErrorStyle}>{fieldErrors.passwordConfirm}</span> : null}
+                            </label>
+                            <label htmlFor="nickname">
+                                닉네임
+                                <input
+                                    id="nickname"
+                                    type="text"
+                                    autoComplete="nickname"
+                                    placeholder="닉네임"
+                                    value={nickname}
+                                    onChange={(e) => setNickname(e.target.value)}
+                                    required
+                                />
+                                {fieldErrors.nickname ? <span style={fieldErrorStyle}>{fieldErrors.nickname}</span> : null}
+                            </label>
+                            <label htmlFor="role">
+                                회원 유형
+                                <select
+                                    id="role"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value as UserRole)}
+                                >
+                                    <option value="USER">일반 회원</option>
+                                    <option value="MANAGER">시설 관리자</option>
+                                </select>
+                            </label>
+                            <button type="submit" className="auth-submit" disabled={submitting}>
+                                {submitting ? "처리 중…" : "회원가입"}
+                            </button>
+                        </form>
+                        <p className="auth-switch">
+                            이미 계정이 있으신가요?{" "}
+                            <Link href="/login">로그인</Link>
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
     );
 }

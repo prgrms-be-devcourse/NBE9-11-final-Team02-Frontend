@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const { user, loading, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   async function handleLogout() {
     await logout();
@@ -29,20 +29,20 @@ export function Header() {
         <nav className={open ? "open" : ""}>
           <Link href="/matches">매치 찾기</Link>
           <Link href="/facilities">경기장</Link>
-          {!loading && user?.role === "MANAGER" ? <Link href="/manager/facilities">내 경기장</Link> : null}
-          {!loading && user?.role === "ADMIN" ? <Link href="/admin/blacklist">관리자</Link> : null}
-          {!loading && user && user.role !== "ADMIN" ? <Link href="/mypage">마이 페이지</Link> : null}
-          {!loading && (user ? (
+          {user?.role === "MANAGER" ? <Link href="/manager/facilities">내 경기장</Link> : null}
+          {user?.role === "ADMIN" ? <Link href="/admin/blacklist">관리자</Link> : null}
+          {user && user.role !== "ADMIN" ? <Link href="/mypage">마이 페이지</Link> : null}
+          {user ? (
             <>
               <Link href="/notifications">알림</Link>
               <button className="logout-button" onClick={handleLogout}>로그아웃</button>
             </>
           ) : (
             <>
-              <Link className="login-link" href="/login">로그인</Link>
-              <Link className="signup-link" href="/signup">회원가입</Link>
+              <Link className="nav-login" href="/login">로그인</Link>
+              <Link className="nav-signup" href="/signup">회원가입</Link>
             </>
-          ))}
+          )}
         </nav>
       </div>
     </header>
