@@ -20,6 +20,12 @@ import type {
 } from "@/lib/types";
 
 const PAGE_SIZE = 12;
+const MATCH_VISIBILITY_ORDER: Record<MatchStatus, number> = {
+    RECRUITING: 0,
+    CONFIRMED: 1,
+    COMPLETED: 2,
+    CANCELLED: 3,
+};
 
 export default function MatchesPage() {
     const [sportType, setSportType] = useState<SportType | "">("");
@@ -31,6 +37,13 @@ export default function MatchesPage() {
     const [data, setData] = useState<PageResponse<MatchSummaryResponse>>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>();
+    const visibleMatches = data?.content
+        ? [...data.content].sort((a, b) => {
+            const statusOrder = MATCH_VISIBILITY_ORDER[a.status] - MATCH_VISIBILITY_ORDER[b.status];
+            if (statusOrder !== 0) return statusOrder;
+            return new Date(a.recruitDeadline).getTime() - new Date(b.recruitDeadline).getTime();
+        })
+        : [];
 
     useEffect(() => {
         let active = true;
@@ -170,7 +183,7 @@ export default function MatchesPage() {
                                 </Link>
                             </div>
                             <div className="match-grid">
-                                {data.content.map((match) => (
+                                {visibleMatches.map((match) => (
                                     <MatchCard key={match.matchId} match={match} />
                                 ))}
                             </div>

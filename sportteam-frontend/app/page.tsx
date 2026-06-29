@@ -18,6 +18,9 @@ export default async function Home() {
     getMatches({ size: "4", sort: "DEADLINE_ASC" }),
     getAvailableFacilities({ size: "3" }),
   ]);
+  const deadlineMatches = matches
+      .filter((match) => match.status === "RECRUITING")
+      .slice(0, 4);
 
   return (
     <>
@@ -70,7 +73,7 @@ export default async function Home() {
         <section className="section matches-section">
           <div className="container">
             <div className="section-heading row"><div><span className="eyebrow">OPEN MATCHES</span><h2>마감 임박 매치</h2><p>지금 참여하면 이번 주에 바로 뛸 수 있어요.</p></div><Link className="text-link" href="/matches">전체 매치 보기 <ArrowIcon /></Link></div>
-            <div className="match-grid">{matches.map((match) => <MatchCard key={match.matchId} match={match} />)}</div>
+            <div className="match-grid">{deadlineMatches.map((match) => <MatchCard key={match.matchId} match={match} />)}</div>
           </div>
         </section>
 

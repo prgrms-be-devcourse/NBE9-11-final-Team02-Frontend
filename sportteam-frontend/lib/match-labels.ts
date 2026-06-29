@@ -26,11 +26,11 @@ export const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
 
 export const SKILL_LEVEL_LABEL: Record<SkillLevel, string> = {
     ANY: "제한 없음",
-    LEVEL_1: "Lv.1",
-    LEVEL_2: "Lv.2",
-    LEVEL_3: "Lv.3",
-    LEVEL_4: "Lv.4",
-    LEVEL_5: "Lv.5",
+    LEVEL_1: "레벨 1",
+    LEVEL_2: "레벨 2",
+    LEVEL_3: "레벨 3",
+    LEVEL_4: "레벨 4",
+    LEVEL_5: "레벨 5",
 };
 
 export const REQUIRED_GENDER_LABEL: Record<RequiredGender, string> = {
