@@ -11,6 +11,7 @@ import {
     confirmMatch,
     getMatch,
     getMatchParticipants,
+    joinMatch,
     leaveMatch,
 } from "@/lib/match";
 import { isBeforeNow } from "@/lib/match-policy";
@@ -249,6 +250,7 @@ function MatchActions({
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string>();
     const [message, setMessage] = useState<string>();
+    const [sportStatRequired, setSportStatRequired] = useState(false);
     const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
     useEffect(() => {
@@ -322,6 +324,7 @@ function MatchActions({
         setSubmitting(true);
         setError(undefined);
         setMessage(undefined);
+        setSportStatRequired(false);
         try {
             await action();
             await onChanged();
@@ -340,7 +343,16 @@ function MatchActions({
         setSubmitting(true);
         setError(undefined);
         setMessage(undefined);
+        setSportStatRequired(false);
         try {
+            try {
+                await joinMatch(match.matchId);
+            } catch (err) {
+                if (!(err instanceof ApiError && err.code === "MATCH_003")) {
+                    throw err;
+                }
+            }
+
             const prepared = await prepareParticipationPayment({
                 userId,
                 matchId: match.matchId,
@@ -366,10 +378,21 @@ function MatchActions({
                 failUrl: currentUrl.toString(),
             });
         } catch (err) {
+            if (err instanceof ApiError && err.code === "USER_005") {
+                setSportStatRequired(true);
+                setError(`${SPORT_TYPE_LABEL[match.sportType]} 실력을 먼저 등록해주세요.`);
+                return;
+            }
             setError(err instanceof ApiError ? err.message : "결제를 시작하지 못했습니다.");
         } finally {
             setSubmitting(false);
         }
+    }
+
+    function goToSportStatRegistration() {
+        router.push(
+            `/mypage/sports?requiredSport=${match.sportType}&next=${encodeURIComponent(`/matches/${match.matchId}`)}`,
+        );
     }
 
     return (
@@ -405,6 +428,18 @@ function MatchActions({
 
             {error ? <div className="join-error">{error}</div> : null}
             {message ? <p className="join-state ok">{message}</p> : null}
+            {sportStatRequired ? (
+                <div className="match-actions">
+                    <button
+                        type="button"
+                        className="secondary"
+                        disabled={submitting}
+                        onClick={goToSportStatRegistration}
+                    >
+                        {SPORT_TYPE_LABEL[match.sportType]} 실력 등록하러 가기
+                    </button>
+                </div>
+            ) : null}
 
             <div className="match-actions">
                 {isHost ? (

@@ -25,7 +25,7 @@ function LoginForm() {
         try {
             await login({ email, password });
             const next = searchParams.get("next");
-            router.push(next && next.startsWith("/") ? next : "/");
+            router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
         } catch (err) {
             setError(
                 err instanceof ApiError
