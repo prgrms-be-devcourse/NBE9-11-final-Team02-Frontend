@@ -8,7 +8,6 @@ import { RequireAuth } from "@/components/require-auth";
 import { useAuth } from "@/lib/auth-context";
 import {
     confirmPayment,
-    consumeQueueToken,
     getQueueStatus,
     issueQueueToken,
     prepareFacilityPayment,
@@ -47,6 +46,7 @@ function FacilityCheckout() {
     const [error, setError] = useState<string>();
     const [message, setMessage] = useState<string>();
     const [loading, setLoading] = useState(false);
+    const [queueConsumed, setQueueConsumed] = useState(false);
 
     const successUrl = useMemo(() => {
         if (typeof window === "undefined") return "";
@@ -65,8 +65,8 @@ function FacilityCheckout() {
         confirmPayment({ userId: user.userId, paymentKey, orderId, amount: approvedAmount })
             .then(() => {
                 if (!active) return;
-                setMessage("방장 결제가 완료되었습니다. 생성된 매치 상세로 이동합니다.");
-                router.replace(`/matches/${matchId}?payment=success`);
+                setMessage("방장 결제가 완료되었습니다. 내 매치 목록으로 이동합니다.");
+                router.replace("/mypage/matches?payment=host-success");
             })
             .catch((err) => {
                 if (active) setError(err instanceof Error ? err.message : "결제 승인에 실패했습니다.");
@@ -84,13 +84,12 @@ function FacilityCheckout() {
         setLoading(true);
         setError(undefined);
         setMessage(undefined);
+        setQueueConsumed(false);
         try {
             let current = queue ?? await issueQueueToken(slotId);
             if (!current.enterable) current = await getQueueStatus(current.token);
             setQueue(current);
             if (!current.enterable) return;
-
-            await consumeQueueToken(current.token);
 
             const prepared = await prepareFacilityPayment({
                 userId: user.userId,
@@ -98,9 +97,11 @@ function FacilityCheckout() {
                 amount,
                 queueToken: current.token,
             });
+            setQueueConsumed(true);
+            setMessage("대기열 입장이 완료되었습니다. 결제창으로 이동합니다.");
 
             if (!TOSS_CLIENT_KEY) {
-                setMessage(`주문서가 생성되었습니다. Toss client key 설정 후 결제를 진행하세요. 주문번호: ${prepared.merchantUid}`);
+                setMessage(`대기열 입장이 완료되었습니다. Toss client key 설정 후 결제를 진행하세요. 주문번호: ${prepared.merchantUid}`);
                 return;
             }
 
@@ -138,7 +139,7 @@ function FacilityCheckout() {
                         <div className="payment-total"><dt>최종 결제 금액</dt><dd>{amount.toLocaleString()}원</dd></div>
                     </dl>
                 </section>
-                {queue ? (
+                {queue && !queueConsumed ? (
                     <div className="queue-notice">
                         <b>{queue.enterable ? "입장 가능" : `현재 대기 순번 ${queue.position}번`}</b>
                         <p>대기 인원 {queue.waitingCount}명 · 만료 시각 {formatDate(queue.expiresAt)}</p>

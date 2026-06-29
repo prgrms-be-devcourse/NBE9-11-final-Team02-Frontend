@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Select } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
@@ -53,7 +53,9 @@ const PAGE_SIZE = 10;
 
 export default function MyMatchesPage() {
     const router = useRouter();
+    const search = useSearchParams();
     const { user, loading: authLoading } = useAuth();
+    const hostPaymentSuccess = search.get("payment") === "host-success";
 
     const [sportType, setSportType] = useState<SportType | "">("");
     const [myMatchStatus, setMyMatchStatus] = useState<MyMatchStatus | "">("");
@@ -110,6 +112,13 @@ export default function MyMatchesPage() {
                     <p>참가하거나 주최한 매치를 확인하세요.</p>
                 </div>
 
+                {hostPaymentSuccess ? (
+                    <div className="policy-notice" style={{ marginBottom: 18 }}>
+                        <b>방장 결제가 완료되었습니다.</b>
+                        <p>생성한 매치가 내 매치 목록에 반영되었습니다.</p>
+                    </div>
+                ) : null}
+
                 <div className="reservation-filter">
                     <label>
                         <span style={{ display: "block", fontSize: 10, color: "var(--muted)", fontWeight: 800, marginBottom: 6 }}>종목</span>
@@ -156,7 +165,8 @@ export default function MyMatchesPage() {
                                     key={match.matchId}
                                     match={match}
                                     expanded={expandedMatchId === match.matchId}
-                                    onToggle={() =>
+                                    onOpen={() => router.push(`/matches/${match.matchId}`)}
+                                    onTogglePayment={() =>
                                         setExpandedMatchId((prev) =>
                                             prev === match.matchId ? undefined : match.matchId,
                                         )
@@ -172,7 +182,17 @@ export default function MyMatchesPage() {
     );
 }
 
-function MatchCard({ match, expanded, onToggle }: { match: MyMatchResponse; expanded: boolean; onToggle: () => void }) {
+function MatchCard({
+    match,
+    expanded,
+    onOpen,
+    onTogglePayment,
+}: {
+    match: MyMatchResponse;
+    expanded: boolean;
+    onOpen: () => void;
+    onTogglePayment: () => void;
+}) {
     const startAt = parseSlotStartAt(match.matchDate, match.startTime);
     const participantCancelDeadline = startAt ? calculateParticipantCancelDeadline(startAt) : null;
 
@@ -182,7 +202,7 @@ function MatchCard({ match, expanded, onToggle }: { match: MyMatchResponse; expa
 
     return (
         <div className="record-panel" style={{ marginBottom: 0 }}>
-            <button type="button" onClick={onToggle} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}>
+            <button type="button" onClick={onOpen} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left" }}>
                 <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
                         <b style={{ fontSize: 14 }}>{match.title}</b>
@@ -200,6 +220,16 @@ function MatchCard({ match, expanded, onToggle }: { match: MyMatchResponse; expa
                 </div>
                 <span className={statusClass}>{MATCH_STATUS_LABEL[match.myMatchStatus]}</span>
             </button>
+
+            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button
+                    type="button"
+                    onClick={onTogglePayment}
+                    style={{ padding: "8px 10px", border: "1px solid var(--line)", borderRadius: 7, background: "#fff", fontSize: 12, fontWeight: 800, color: "var(--text)", cursor: "pointer" }}
+                >
+                    {expanded ? "결제 내역 접기" : "결제 내역 보기"}
+                </button>
+            </div>
 
             {expanded ? <MatchPaymentDetail matchId={match.matchId} /> : null}
             {match.myMatchStatus === "COMPLETED" ? (
