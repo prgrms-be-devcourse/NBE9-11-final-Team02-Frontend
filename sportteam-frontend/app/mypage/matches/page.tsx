@@ -49,7 +49,18 @@ const SETTLEMENT_STATUS_LABEL: Record<string, string> = {
     FAILED: "정산 실패",
 };
 
+const REFUND_REASON_LABEL: Record<string, string> = {
+    MATCH_CANCELLED_BY_HOST: "방장 취소로 인한 전액 환불",
+    MATCH_MINIMUM_PARTICIPANTS_NOT_MET: "최소 인원 미달로 인한 자동 환불",
+    MATCH_PARTICIPANT_LEFT: "참가자 직접 이탈로 인한 전액 환불",
+};
+
 const PAGE_SIZE = 10;
+
+function formatRefundReason(reason?: string | null) {
+    if (!reason) return "-";
+    return REFUND_REASON_LABEL[reason] ?? reason;
+}
 
 export default function MyMatchesPage() {
     const router = useRouter();
@@ -275,7 +286,7 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
                 <>
                     <PaymentItem label="시설 결제 금액" value={`${payment.hostDetail.facilityPaymentAmount.toLocaleString()}원`} />
                     <PaymentItem label="결제 상태" value={PAYMENT_STATUS_LABEL[payment.hostDetail.facilityPaymentStatus]} />
-                    <PaymentItem label="환불 사유" value={payment.hostDetail.refundReason ?? "-"} />
+                    <PaymentItem label="환불 사유" value={formatRefundReason(payment.hostDetail.refundReason)} />
                     <PaymentItem label="정산 금액" value={payment.hostDetail.hostSettlementAmount != null ? `${payment.hostDetail.hostSettlementAmount.toLocaleString()}원` : "-"} />
                     <PaymentItem label="정산 상태" value={payment.hostDetail.settlementStatus ? SETTLEMENT_STATUS_LABEL[payment.hostDetail.settlementStatus] : "-"} />
                 </>
@@ -284,7 +295,7 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
                 <>
                     <PaymentItem label="참가비" value={`${payment.participantDetail.amount.toLocaleString()}원`} />
                     <PaymentItem label="결제 상태" value={PAYMENT_STATUS_LABEL[payment.participantDetail.status]} />
-                    <PaymentItem label="환불 사유" value={payment.participantDetail.refundReason ?? "-"} />
+                    <PaymentItem label="환불 사유" value={formatRefundReason(payment.participantDetail.refundReason)} />
                 </>
             ) : null}
         </div>

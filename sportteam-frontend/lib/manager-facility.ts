@@ -17,6 +17,13 @@ export function createFacility(managerId: string, request: FacilityCreateRequest
     });
 }
 
+export function getManagerFacility(managerId: string, facilityId: string) {
+    return apiFetch<FacilityResponse>(`/api/v1/manager/facilities/${facilityId}`, {
+        auth: true,
+        headers: { "X-USER-ID": managerId },
+    });
+}
+
 export function setupFacilitySlots(managerId: string, facilityId: string, request: SlotSetupRequest) {
     return apiFetch<FacilitySlotResponse[]>(`/api/v1/manager/facilities/${facilityId}/slots`, {
         method: "POST",

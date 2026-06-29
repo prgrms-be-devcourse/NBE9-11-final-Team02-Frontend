@@ -163,6 +163,18 @@ function MatchInfoSection({ match }: { match: MatchDetailResponse }) {
             <h2>매치 정보</h2>
             <div className="info-grid">
                 <div>
+                    <span>경기장</span>
+                    <b>{match.facilityName || "-"}</b>
+                </div>
+                <div>
+                    <span>주소</span>
+                    <b>{match.facilityAddress || "-"}</b>
+                </div>
+                <div>
+                    <span>주최자</span>
+                    <b>{match.hostNickname || "알 수 없음"}</b>
+                </div>
+                <div>
                     <span>모집 현황</span>
                     <b>
                         {match.currentCount} / {match.capacity}명
@@ -224,7 +236,7 @@ function ParticipantSection({
                             <span>{p.userId === hostId ? "H" : "P"}</span>
                             <div>
                                 <b>{p.userId === hostId ? "주최자" : "참가자"}</b>
-                                <small>{p.userId.slice(0, 8)}…</small>
+                                <small>{p.nickname || "알 수 없음"}</small>
                             </div>
                         </div>
                     ))}
@@ -339,17 +351,19 @@ function MatchActions({
         }
     }
 
-    async function startParticipationPayment() {
+    async function startParticipationPayment(options: { skipJoin?: boolean } = {}) {
         setSubmitting(true);
         setError(undefined);
         setMessage(undefined);
         setSportStatRequired(false);
         try {
-            try {
-                await joinMatch(match.matchId);
-            } catch (err) {
-                if (!(err instanceof ApiError && err.code === "MATCH_003")) {
-                    throw err;
+            if (!options.skipJoin) {
+                try {
+                    await joinMatch(match.matchId);
+                } catch (err) {
+                    if (!(err instanceof ApiError && err.code === "MATCH_003")) {
+                        throw err;
+                    }
                 }
             }
 
@@ -364,18 +378,20 @@ function MatchActions({
                 return;
             }
 
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.delete("paymentKey");
-            currentUrl.searchParams.delete("orderId");
-            currentUrl.searchParams.delete("amount");
+            const successUrl = new URL("/checkout/success", window.location.origin);
+            successUrl.searchParams.set("matchId", match.matchId);
+            successUrl.searchParams.set("paymentType", "participation");
+
+            const failUrl = new URL("/checkout/fail", window.location.origin);
+            failUrl.searchParams.set("matchId", match.matchId);
 
             await requestTossPayment({
                 clientKey: tossClientKey,
                 amount: prepared.amount,
                 orderId: prepared.merchantUid,
                 orderName: `${match.title} 참가비`,
-                successUrl: currentUrl.toString(),
-                failUrl: currentUrl.toString(),
+                successUrl: successUrl.toString(),
+                failUrl: failUrl.toString(),
             });
         } catch (err) {
             if (err instanceof ApiError && err.code === "USER_005") {
@@ -494,9 +510,18 @@ function MatchActions({
                         <p>이미 참가 확정된 매치입니다.</p>
                     </>
                 ) : myPaymentPending ? (
-                    <p className="join-state warn">
-                        결제 대기 중입니다. 결제를 완료하거나 잠시 후 다시 확인해주세요.
-                    </p>
+                    <>
+                        <button
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => void startParticipationPayment({ skipJoin: true })}
+                        >
+                            {submitting ? "처리 중…" : "결제 이어서 완료하기"}
+                        </button>
+                        <p className="join-state warn">
+                            결제가 아직 완료되지 않았습니다. 결제창을 닫았거나 승인 처리에 실패했을 수 있어요.
+                        </p>
+                    </>
                 ) : !recruiting ? (
                     <p className="join-state muted">모집이 마감된 매치입니다.</p>
                 ) : full ? (

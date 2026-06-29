@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, FormError, Input } from "@/components/ui";
+import { AddressSearchInput } from "@/components/address-search-input";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 import { createFacility } from "@/lib/manager-facility";
@@ -32,6 +33,7 @@ export default function NewFacilityPage() {
     const [saving, setSaving] = useState(false);
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [address, setAddress] = useState("");
 
     async function handleFiles(event: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(event.target.files ?? []);
@@ -115,7 +117,13 @@ export default function NewFacilityPage() {
                     </div>
 
                     <Field label="주소" htmlFor="address">
-                        <Input id="address" name="address" required placeholder="도로명 주소를 입력해주세요" />
+                        <AddressSearchInput
+                            id="address"
+                            name="address"
+                            value={address}
+                            required
+                            onChange={setAddress}
+                        />
                     </Field>
 
                     <label className="manager-field">

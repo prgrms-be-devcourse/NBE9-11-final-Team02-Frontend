@@ -25,10 +25,10 @@ export async function getAvailableFacilities(params: Record<string, string | und
 
 const future = (days: number, hour: number) => { const date = new Date(); date.setDate(date.getDate() + days); date.setHours(hour, 0, 0, 0); return date.toISOString(); };
 const fallbackMatches: MatchSummaryResponse[] = [
-  { matchId: "demo-1", title: "퇴근 후 가볍게 풋살 한 게임!", sportType: "FUTSAL", currentCount: 8, capacity: 10, feePerPerson: 12000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_3", requiredGender: "ANY", recruitDeadline: future(1, 20), status: "RECRUITING" },
-  { matchId: "demo-2", title: "주말 오전 3:3 농구 같이 해요", sportType: "BASKETBALL", currentCount: 4, capacity: 6, feePerPerson: 8000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_5", requiredGender: "ANY", recruitDeadline: future(2, 10), status: "RECRUITING" },
-  { matchId: "demo-3", title: "랠리 위주 배드민턴 복식", sportType: "BADMINTON", currentCount: 2, capacity: 4, feePerPerson: 9000, minSkillLevel: "LEVEL_2", maxSkillLevel: "LEVEL_5", requiredGender: "ANY", recruitDeadline: future(3, 19), status: "RECRUITING" },
-  { matchId: "demo-4", title: "초보 환영! 일요일 테니스", sportType: "TENNIS", currentCount: 3, capacity: 6, feePerPerson: 15000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_3", requiredGender: "ANY", recruitDeadline: future(4, 14), status: "RECRUITING" },
+  { matchId: "demo-1", title: "퇴근 후 가볍게 풋살 한 게임!", hostNickname: "성수러너", facilityName: "서울 풋살 파크 성수", facilityAddress: "서울 성동구 성수이로 88", sportType: "FUTSAL", currentCount: 8, capacity: 10, feePerPerson: 12000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_3", requiredGender: "ANY", recruitDeadline: future(1, 20), status: "RECRUITING" },
+  { matchId: "demo-2", title: "주말 오전 3:3 농구 같이 해요", hostNickname: "마포가드", facilityName: "바운드 농구 코트", facilityAddress: "서울 마포구 월드컵북로 21", sportType: "BASKETBALL", currentCount: 4, capacity: 6, feePerPerson: 8000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_5", requiredGender: "ANY", recruitDeadline: future(2, 10), status: "RECRUITING" },
+  { matchId: "demo-3", title: "랠리 위주 배드민턴 복식", hostNickname: "송파스매셔", facilityName: "스매시 배드민턴 센터", facilityAddress: "서울 송파구 올림픽로 35", sportType: "BADMINTON", currentCount: 2, capacity: 4, feePerPerson: 9000, minSkillLevel: "LEVEL_2", maxSkillLevel: "LEVEL_5", requiredGender: "ANY", recruitDeadline: future(3, 19), status: "RECRUITING" },
+  { matchId: "demo-4", title: "초보 환영! 일요일 테니스", hostNickname: "테니스메이트", facilityName: "플레이온 테니스 코트", facilityAddress: "서울 서초구 반포대로 12", sportType: "TENNIS", currentCount: 3, capacity: 6, feePerPerson: 15000, minSkillLevel: "LEVEL_1", maxSkillLevel: "LEVEL_3", requiredGender: "ANY", recruitDeadline: future(4, 14), status: "RECRUITING" },
 ];
 const fallbackFacilities: FacilityAvailableResponse[] = [
   { facilityId: "demo-f1", name: "서울 풋살 파크 성수", address: "서울 성동구 성수이로 88", defaultWeekdayPrice: 60000, defaultWeekendPrice: 80000, sportTypes: ["FUTSAL", "SOCCER"], thumbnailUrl: null, ratingAvg: 4.9, reviewCount: 128 },
