@@ -25,6 +25,15 @@ const SPORT_OPTIONS: SportType[] = [
 
 const PAGE_SIZE = 15;
 
+/** 종목별 도넛/범례 색상 (SPORT_OPTIONS 순서와 무관하게 종목 고정) */
+const SPORT_COLOR: Record<SportType, string> = {
+    FUTSAL: "#0d7a54",
+    SOCCER: "#3fa97e",
+    BASKETBALL: "#e08a3c",
+    TENNIS: "#5b8def",
+    BADMINTON: "#c0567b",
+};
+
 /** Date → 'YYYY-MM-DD' */
 function isoDate(d: Date): string {
     return d.toISOString().slice(0, 10);
@@ -149,40 +158,104 @@ export default function AdminSettlementsPage() {
                 <>
                     {summary ? (
                         <>
-                            <div className="admin-stat-grid">
-                                <div className="admin-stat">
-                                    <span>정산 건수</span>
-                                    <strong>{summary.total.count.toLocaleString()}<small>건</small></strong>
-                                </div>
-                                <div className="admin-stat">
+                            <p className="admin-meta">
+                                <span>정산 집계</span>
+                                <span>정산 {summary.total.count.toLocaleString()}건</span>
+                            </p>
+                            <div className="admin-equation">
+                                <div className="eq-item">
                                     <span>총 참가비</span>
-                                    <strong>{summary.total.totalParticipantFee.toLocaleString()}<small>원</small></strong>
+                                    <strong>{summary.total.totalParticipantFee.toLocaleString()}원</strong>
                                 </div>
-                                <div className="admin-stat">
-                                    <span>플랫폼 수수료</span>
-                                    <strong>{summary.total.totalPlatformFee.toLocaleString()}<small>원</small></strong>
+                                <i className="eq-op">−</i>
+                                <div className="eq-item">
+                                    <span>
+                                        플랫폼 수수료
+                                        <em>
+                                            {summary.total.totalParticipantFee > 0
+                                                ? `${(
+                                                    (summary.total.totalPlatformFee /
+                                                        summary.total.totalParticipantFee) *
+                                                    100
+                                                ).toFixed(1)}%`
+                                                : "0%"}
+                                        </em>
+                                    </span>
+                                    <strong>{summary.total.totalPlatformFee.toLocaleString()}원</strong>
                                 </div>
-                                <div className="admin-stat">
+                                <i className="eq-op">=</i>
+                                <div className="eq-item highlight">
                                     <span>호스트 정산액</span>
-                                    <strong>{summary.total.totalHostSettlementAmount.toLocaleString()}<small>원</small></strong>
+                                    <strong>{summary.total.totalHostSettlementAmount.toLocaleString()}원</strong>
                                 </div>
                             </div>
 
                             {summary.breakdown.length > 0 ? (
                                 <>
                                     <p className="admin-meta">
-                                        <span>종목별 플랫폼 수수료</span>
+                                        <span>종목별 플랫폼 수수료 비중</span>
                                     </p>
-                                    <div className="admin-table">
-                                        {summary.breakdown.map((b) => (
-                                            <article key={b.sportType} className="admin-row"
-                                                     style={{ gridTemplateColumns: "1fr 120px 1fr" }}>
-                                                <b>{SPORT_TYPE_LABEL[b.sportType]}</b>
-                                                <span className="cell muted">{b.count.toLocaleString()}건</span>
-                                                <b>{b.totalPlatformFee.toLocaleString()}원</b>
-                                            </article>
-                                        ))}
-                                    </div>
+                                    {(() => {
+                                        const ranked = [...summary.breakdown].sort(
+                                            (a, b) => b.totalPlatformFee - a.totalPlatformFee,
+                                        );
+                                        const totalFee = ranked.reduce(
+                                            (sum, b) => sum + b.totalPlatformFee,
+                                            0,
+                                        );
+                                        const R = 60;
+                                        const C = 2 * Math.PI * R;
+                                        let offset = 0;
+                                        return (
+                                            <div className="admin-donut">
+                                                <svg viewBox="0 0 160 160" className="donut-svg">
+                                                    {totalFee > 0 ? (
+                                                        ranked.map((b) => {
+                                                            const frac = b.totalPlatformFee / totalFee;
+                                                            const dash = frac * C;
+                                                            const seg = (
+                                                                <circle
+                                                                    key={b.sportType}
+                                                                    cx="80"
+                                                                    cy="80"
+                                                                    r={R}
+                                                                    fill="none"
+                                                                    stroke={SPORT_COLOR[b.sportType]}
+                                                                    strokeWidth="20"
+                                                                    strokeDasharray={`${dash} ${C - dash}`}
+                                                                    strokeDashoffset={-offset}
+                                                                />
+                                                            );
+                                                            offset += dash;
+                                                            return seg;
+                                                        })
+                                                    ) : (
+                                                        <circle cx="80" cy="80" r={R} fill="none"
+                                                                stroke="#edf1ee" strokeWidth="20" />
+                                                    )}
+                                                    <text x="80" y="74" className="donut-label">총 수수료</text>
+                                                    <text x="80" y="94" className="donut-value">
+                                                        {totalFee.toLocaleString()}원
+                                                    </text>
+                                                </svg>
+                                                <ul className="donut-legend">
+                                                    {ranked.map((b, i) => (
+                                                        <li key={b.sportType}>
+                                                            <i style={{ background: SPORT_COLOR[b.sportType] }} />
+                                                            <span className="rank">{i + 1}</span>
+                                                            <span className="name">{SPORT_TYPE_LABEL[b.sportType]}</span>
+                                                            <b>{b.totalPlatformFee.toLocaleString()}원</b>
+                                                            <span className="pct">
+                                                                {totalFee > 0
+                                                                    ? `${((b.totalPlatformFee / totalFee) * 100).toFixed(1)}%`
+                                                                    : "0%"}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    })()}
                                 </>
                             ) : null}
                         </>
