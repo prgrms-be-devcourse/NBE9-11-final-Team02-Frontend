@@ -195,41 +195,49 @@ export default function AdminUsersPage() {
                                     </span>
                                 </span>
                                 <span className="cell">
-                                    <b>매너 {u.mannerScore ?? "-"}</b>
-                                    <span className="sub">
-                                        리뷰 {u.mannerReviewCount}건
-                                    </span>
-                                </span>
-                                <div>
-                                    {u.restricted ? (
+                                    {u.role !== "ADMIN" ? (
                                         <>
-                                            <span className="admin-badge badge-off">
-                                                이용 제한
-                                            </span>
+                                            <b>매너 {u.mannerScore ?? "-"}</b>
                                             <span className="sub">
-                                                {u.restrictionReason || "사유 미입력"}{" "}
-                                                ({formatDate(u.restrictedAt)})
+                                                리뷰 {u.mannerReviewCount}건
                                             </span>
                                         </>
-                                    ) : (
-                                        <span className="admin-badge badge-on">
-                                            정상
-                                        </span>
-                                    )}
+                                    ) : null}
+                                </span>
+                                <div>
+                                    {u.role !== "ADMIN" ? (
+                                        u.restricted ? (
+                                            <>
+                                                <span className="admin-badge badge-off">
+                                                    이용 제한
+                                                </span>
+                                                <span className="sub">
+                                                    {u.restrictionReason || "사유 미입력"}{" "}
+                                                    ({formatDate(u.restrictedAt)})
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="admin-badge badge-on">
+                                                정상
+                                            </span>
+                                        )
+                                    ) : null}
                                 </div>
                                 <div className="admin-row-actions">
-                                    <button
-                                        type="button"
-                                        className={u.restricted ? undefined : "danger"}
-                                        disabled={pendingId === u.userId}
-                                        onClick={() => toggleRestriction(u)}
-                                    >
-                                        {pendingId === u.userId
-                                            ? "처리 중…"
-                                            : u.restricted
-                                                ? "제한 해제"
-                                                : "이용 제한"}
-                                    </button>
+                                    {u.role !== "ADMIN" ? (
+                                        <button
+                                            type="button"
+                                            className={u.restricted ? undefined : "danger"}
+                                            disabled={pendingId === u.userId}
+                                            onClick={() => toggleRestriction(u)}
+                                        >
+                                            {pendingId === u.userId
+                                                ? "처리 중…"
+                                                : u.restricted
+                                                    ? "제한 해제"
+                                                    : "이용 제한"}
+                                        </button>
+                                    ) : null}
                                 </div>
                             </article>
                         ))}

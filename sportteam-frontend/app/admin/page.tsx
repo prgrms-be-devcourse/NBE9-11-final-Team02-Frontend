@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin";
 import { ApiError } from "@/lib/http";
 import { getSettlementSummary } from "@/lib/settlement";
+import { SPORT_TYPE_LABEL } from "@/lib/match-labels";
 import type { SettlementSummaryResponse } from "@/lib/types";
 
 /** Date → 'YYYY-MM-DD' (백엔드 LocalDate 형식) */
@@ -98,6 +99,39 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
 
+                    {data.summary.breakdown.length > 0 ? (
+                        <>
+                            <p className="admin-meta">
+                                <span>최근 30일 종목별 플랫폼 수수료</span>
+                                <Link href="/admin/settlements">정산 내역 전체 보기 →</Link>
+                            </p>
+                            <div className="admin-bars">
+                                {(() => {
+                                    const feeMax = Math.max(
+                                        1,
+                                        ...data.summary.breakdown.map((b) => b.totalPlatformFee),
+                                    );
+                                    return data.summary.breakdown.map((b) => (
+                                        <div className="admin-bar" key={b.sportType}>
+                                            <span>{SPORT_TYPE_LABEL[b.sportType]}</span>
+                                            <i>
+                                                <em
+                                                    style={{
+                                                        width: `${(b.totalPlatformFee / feeMax) * 100}%`,
+                                                    }}
+                                                />
+                                            </i>
+                                            <b>{b.totalPlatformFee.toLocaleString()}원</b>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </>
+                    ) : null}
+
+                    <p className="admin-meta">
+                        <span>바로가기</span>
+                    </p>
                     <div className="admin-card-grid">
                         <Link className="admin-card" href="/admin/users">
                             <b>회원 관리</b>
