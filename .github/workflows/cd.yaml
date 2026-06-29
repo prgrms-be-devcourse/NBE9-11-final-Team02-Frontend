@@ -4,6 +4,10 @@ env:
   IMAGE_REPOSITORY: nbe9-11-team02-frontend
   # Next.js 앱이 레포 루트가 아닌 하위 디렉토리에 위치
   APP_DIR: sportteam-frontend
+  # 백엔드와 동일한 단일 prod 서버에 배포 (terraform prefix + "-web")
+  EC2_INSTANCE_TAG_NAME: team02-web
+  FRONTEND_CONTAINER: frontend_1
+  CONTAINER_PORT: 3000
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -85,9 +89,105 @@ jobs:
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:${{ needs.calculateTag.outputs.tag_name }}
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:latest
 
+  deploy:
+    name: 프론트엔드 배포
+    needs: [calculateTag, buildImageAndPush]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: 인스턴스 ID 가져오기
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=${{ env.EC2_INSTANCE_TAG_NAME }}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" --output text)
+          [[ -n "${INSTANCE_ID}" && "${INSTANCE_ID}" != "None" ]] || { echo "No running instance found"; exit 1; }
+          echo "INSTANCE_ID=${INSTANCE_ID}" >> "${GITHUB_ENV}"
+
+      - name: AWS SSM 배포
+        run: |
+          DEPLOY_SCRIPT=$(cat << 'SCRIPT_EOF'
+            set -Eeuo pipefail
+
+            OWNER_LC="${{ github.repository_owner }}"
+            OWNER_LC="${OWNER_LC,,}"
+            IMAGE="ghcr.io/${OWNER_LC}/${{ env.IMAGE_REPOSITORY }}:${{ needs.calculateTag.outputs.tag_name }}"
+            FRONTEND="${{ env.FRONTEND_CONTAINER }}"
+            PORT_IN="${{ env.CONTAINER_PORT }}"
+            COMPOSE=/home/ec2-user/app/docker-compose.yaml
+
+            [[ -f "${COMPOSE}" ]] || { echo "❌ 서버에 compose 파일이 없습니다. 백엔드 배포가 먼저 필요합니다."; exit 1; }
+
+            echo "이미지 pull: ${IMAGE}"
+            docker pull "${IMAGE}"
+
+            # 단일 컨테이너 recreate (블루-그린 아님). nginx는 resolver로 새 IP를 자동 인식.
+            FRONTEND_IMAGE="${IMAGE}" docker-compose --env-file /home/ec2-user/app/.env -f "${COMPOSE}" --profile prod up -d --no-deps "${FRONTEND}"
+
+            echo "헬스체크 대기: ${FRONTEND}"
+            TIMEOUT=120
+            ELAPSED=5
+            sleep 5
+            CONTAINER_IP=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${FRONTEND}")
+            while (( ELAPSED < TIMEOUT )); do
+              CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://${CONTAINER_IP}:${PORT_IN}/" || echo "000")
+              [[ "${CODE}" =~ ^[23][0-9][0-9]$ ]] && { echo "${FRONTEND} 정상 기동 (HTTP ${CODE})"; break; }
+              sleep 5
+              ELAPSED=$((ELAPSED + 5))
+            done
+            [[ "${CODE:-}" =~ ^[23][0-9][0-9]$ ]] || { echo "${FRONTEND} 헬스체크 실패 (HTTP ${CODE:-none})"; docker logs --tail=200 "${FRONTEND}" || true; exit 1; }
+
+            docker image prune -f
+            echo "배포 완료: ${FRONTEND}"
+          SCRIPT_EOF
+          )
+
+          PARAMS=$(jq -nc --arg s "$DEPLOY_SCRIPT" '{"commands":[$s]}')
+
+          COMMAND_ID=$(aws ssm send-command \
+            --region "${{ secrets.AWS_REGION }}" \
+            --instance-ids "${{ env.INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters "$PARAMS" \
+            --query "Command.CommandId" \
+            --output text)
+
+          WAIT_MAX=600
+          WAIT_INTERVAL=10
+          WAIT_ELAPSED=0
+          while (( WAIT_ELAPSED < WAIT_MAX )); do
+            CMD_STATUS=$(aws ssm get-command-invocation \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "${{ env.INSTANCE_ID }}" \
+              --query 'Status' --output text 2>/dev/null || echo "Unknown")
+            [[ "${CMD_STATUS}" == "InProgress" || "${CMD_STATUS}" == "Pending" ]] || break
+            sleep ${WAIT_INTERVAL}
+            WAIT_ELAPSED=$(( WAIT_ELAPSED + WAIT_INTERVAL ))
+          done
+
+          INVOCATION=$(aws ssm get-command-invocation \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${{ env.INSTANCE_ID }}")
+          STATUS=$(echo "$INVOCATION" | jq -r '.Status')
+
+          echo "===== stdout ====="
+          echo "$INVOCATION" | jq -r '.StandardOutputContent'
+          echo "===== stderr ====="
+          echo "$INVOCATION" | jq -r '.StandardErrorContent'
+          echo "=================="
+          echo "Status: ${STATUS}"
+
+          [[ "$STATUS" == "Success" ]] || exit 1
+
   makeTagAndRelease:
     runs-on: ubuntu-latest
-    needs: buildImageAndPush
+    needs: deploy
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
