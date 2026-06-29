@@ -283,6 +283,9 @@ export type MatchSortType =
 export interface MatchSummaryResponse {
     matchId: string;
     title: string;
+    hostNickname: string;
+    facilityName: string;
+    facilityAddress: string;
     sportType: SportType;
     currentCount: number;
     capacity: number;
@@ -298,7 +301,10 @@ export interface MatchDetailResponse {
     matchId: string;
     reservationId: string;
     hostId: string;
+    hostNickname: string;
     title: string;
+    facilityName: string;
+    facilityAddress: string;
     sportType: SportType;
     capacity: number;
     currentCount: number;
@@ -319,6 +325,7 @@ export interface MatchDetailResponse {
 export interface MatchParticipantResponse {
     participantId: string;
     userId: string;
+    nickname: string;
     role: MatchParticipantRole;
     status: MatchParticipantStatus;
     joinedAt: string;

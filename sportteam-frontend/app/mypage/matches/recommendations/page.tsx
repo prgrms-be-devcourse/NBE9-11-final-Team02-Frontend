@@ -203,18 +203,6 @@ function RecommendationCard({ match }: { match: MatchRecommendationResponse }) {
                     {match.feePerPerson.toLocaleString()}원
                 </strong>
             </div>
-
-            <div className="mb-6 flex items-center justify-between gap-3">
-                <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                    매치 찾기
-                </h1>
-                <Link
-                    href="/matches/recommendations"
-                    className="shrink-0 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                >
-                    맞춤 추천
-                </Link>
-            </div>
         </Link>
     );
 }
