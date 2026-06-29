@@ -1,0 +1,108 @@
+name: CD
+
+env:
+  IMAGE_REPOSITORY: nbe9-11-team02-frontend
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.ts"
+      - "tsconfig.json"
+      - "postcss.config.mjs"
+      - "Dockerfile"
+    branches:
+      - main
+      - develop
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  calculateTag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag_name: ${{ steps.dry_run.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 다음 버전 태그 계산 (dry-run)
+        id: dry_run
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+
+  buildImageAndPush:
+    name: 도커 이미지 빌드와 푸시
+    needs: calculateTag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Buildx 설치
+        uses: docker/setup-buildx-action@v3
+
+      - name: 레지스트리 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 소유자 이름 소문자 변환
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> "${GITHUB_ENV}"
+        env:
+          OWNER: "${{ github.repository_owner }}"
+
+      - name: 빌드 앤 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:${{ needs.calculateTag.outputs.tag_name }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:latest
+
+  makeTagAndRelease:
+    runs-on: ubuntu-latest
+    needs: buildImageAndPush
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 태그 생성
+        id: create_tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 릴리즈 생성
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.create_tag.outputs.new_tag }}
+          name: Release ${{ steps.create_tag.outputs.new_tag }}
+          body: ${{ steps.create_tag.outputs.changelog }}
+          draft: false
+          prerelease: false
