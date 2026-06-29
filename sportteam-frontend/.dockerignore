@@ -1,0 +1,30 @@
+# 의존성 (이미지 내부에서 npm ci로 재설치)
+node_modules
+
+# 빌드 산출물 (이미지 내부에서 새로 빌드)
+.next
+out
+build
+
+# 환경 파일 (런타임 env로 주입)
+.env*
+
+# 버전 관리 / 메타
+.git
+.gitignore
+
+# 에디터 / OS
+.DS_Store
+.vscode
+.idea
+
+# 로그
+*.log
+npm-debug.log*
+
+# 문서 / 설정 (런타임 불필요)
+README.md
+AGENTS.md
+CLAUDE.md
+.vercel
+*.tsbuildinfo
