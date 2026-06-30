@@ -5,12 +5,20 @@ import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
-import { getManagerFacility, setupFacilitySlots } from "@/lib/manager-facility";
-import type { FacilityResponse } from "@/lib/types";
+import { getManagerFacility, getManagerFacilitySlots, setupFacilitySlots } from "@/lib/manager-facility";
+import type { FacilityResponse, FacilitySlotResponse, SlotStatus } from "@/lib/types";
 
 function today() {
     return new Date().toISOString().slice(0, 10);
 }
+
+const SLOT_STATUS_LABEL: Record<SlotStatus, string> = {
+    AVAILABLE: "예약 가능",
+    PENDING: "결제 대기",
+    RESERVED: "예약 완료",
+    CLOSED: "운영 종료",
+    BLOCKED: "차단",
+};
 
 export default function FacilitySlotsPage() {
     const { facilityId } = useParams<{ facilityId: string }>();
@@ -19,6 +27,11 @@ export default function FacilitySlotsPage() {
     const [error, setError] = useState<string>();
     const [saving, setSaving] = useState(false);
     const [count, setCount] = useState<number>();
+
+    const [viewDate, setViewDate] = useState(today());
+    const [slots, setSlots] = useState<FacilitySlotResponse[]>();
+    const [slotsLoading, setSlotsLoading] = useState(true);
+    const [slotsError, setSlotsError] = useState<string>();
 
     useEffect(() => {
         if (!user) return;
@@ -34,6 +47,27 @@ export default function FacilitySlotsPage() {
             active = false;
         };
     }, [facilityId, user]);
+
+    useEffect(() => {
+        if (!user) return;
+        let active = true;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSlotsLoading(true);
+        setSlotsError(undefined);
+        getManagerFacilitySlots(facilityId, viewDate)
+            .then((data) => {
+                if (active) setSlots(data);
+            })
+            .catch((err) => {
+                if (active) setSlotsError(err instanceof Error ? err.message : "슬롯을 불러오지 못했습니다.");
+            })
+            .finally(() => {
+                if (active) setSlotsLoading(false);
+            });
+        return () => {
+            active = false;
+        };
+    }, [facilityId, user, viewDate, count]);
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -127,6 +161,43 @@ export default function FacilitySlotsPage() {
                         예약 슬롯 생성하기
                     </Button>
                 </form>
+
+                <div className="flow-heading">
+                    <span>SLOT LIST</span>
+                    <h2>등록된 슬롯</h2>
+                    <p>날짜를 선택해 해당 일자의 슬롯 구성을 확인하세요.</p>
+                </div>
+                <Field label="조회 날짜" htmlFor="viewDate">
+                    <Input
+                        id="viewDate"
+                        name="viewDate"
+                        type="date"
+                        value={viewDate}
+                        onChange={(event) => setViewDate(event.target.value)}
+                    />
+                </Field>
+
+                {slotsError ? (
+                    <FormError message={slotsError} />
+                ) : slotsLoading || !slots ? (
+                    <p className="manager-empty">불러오는 중…</p>
+                ) : slots.length === 0 ? (
+                    <p className="manager-empty">이 날짜에 등록된 슬롯이 없습니다.</p>
+                ) : (
+                    <section className="reservation-table">
+                        {slots.map((slot) => (
+                            <article key={slot.id}>
+                                <div>
+                                    <em className={`slot-${slot.status.toLowerCase()}`}>
+                                        {SLOT_STATUS_LABEL[slot.status]}
+                                    </em>
+                                    <span>{slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}</span>
+                                </div>
+                                <strong>{slot.price.toLocaleString()}원</strong>
+                            </article>
+                        ))}
+                    </section>
+                )}
             </div>
         </main>
     );
