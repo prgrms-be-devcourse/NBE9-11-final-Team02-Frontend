@@ -24,6 +24,14 @@ export function getManagerFacility(managerId: string, facilityId: string) {
     });
 }
 
+export function getManagerFacilitySlots(facilityId: string, date: string) {
+    const query = new URLSearchParams({ date });
+    return apiFetch<FacilitySlotResponse[]>(
+        `/api/v1/manager/facilities/${facilityId}/slots?${query.toString()}`,
+        { auth: true },
+    );
+}
+
 export function setupFacilitySlots(managerId: string, facilityId: string, request: SlotSetupRequest) {
     return apiFetch<FacilitySlotResponse[]>(`/api/v1/manager/facilities/${facilityId}/slots`, {
         method: "POST",
