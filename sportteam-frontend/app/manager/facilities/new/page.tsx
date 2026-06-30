@@ -4,7 +4,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError, Input, Select } from "@/components/ui";
+
+const SLOT_DURATIONS = [30, 60, 90, 120, 150, 180, 210, 240];
+
+function slotDurationLabel(minutes: number) {
+    if (minutes < 60) return `${minutes}분`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest === 0 ? `${hours}시간` : `${hours}시간 ${rest}분`;
+}
 import { AddressSearchInput } from "@/components/address-search-input";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
@@ -62,8 +71,6 @@ export default function NewFacilityPage() {
         setSaving(true);
         setError(undefined);
         const data = new FormData(event.currentTarget);
-        const manualUrl = data.get("imageUrl") ? String(data.get("imageUrl")) : "";
-        const images = [...imageUrls, ...(manualUrl ? [manualUrl] : [])];
         try {
             const facility = await createFacility(user.userId, {
                 name: String(data.get("name")),
@@ -74,10 +81,10 @@ export default function NewFacilityPage() {
                 slotDurationMinutes: Number(data.get("slotDurationMinutes")),
                 defaultWeekdayPrice: Number(data.get("defaultWeekdayPrice")),
                 defaultWeekendPrice: Number(data.get("defaultWeekendPrice")),
-                slotOpenAt: data.get("slotOpenAt") ? String(data.get("slotOpenAt")) : null,
+                slotOpenAt: null,
                 sportTypes: data.getAll("sportTypes") as SportType[],
                 amenities: data.getAll("amenities") as Amenity[],
-                imageUrls: images,
+                imageUrls,
             });
             router.push(`/manager/facilities/${facility.id}/slots?created=1`);
         } catch (e) {
@@ -135,8 +142,14 @@ export default function NewFacilityPage() {
                         <Field label="수용 인원" htmlFor="capacity">
                             <Input id="capacity" name="capacity" type="number" min={1} defaultValue={10} required />
                         </Field>
-                        <Field label="슬롯 단위(분)" htmlFor="slotDurationMinutes">
-                            <Input id="slotDurationMinutes" name="slotDurationMinutes" type="number" min={30} step={30} defaultValue={60} required />
+                        <Field label="슬롯 단위" htmlFor="slotDurationMinutes">
+                            <Select id="slotDurationMinutes" name="slotDurationMinutes" defaultValue={60} required>
+                                {SLOT_DURATIONS.map((minutes) => (
+                                    <option key={minutes} value={minutes}>
+                                        {slotDurationLabel(minutes)}
+                                    </option>
+                                ))}
+                            </Select>
                         </Field>
                         <Field label="평일 기본 요금" htmlFor="defaultWeekdayPrice">
                             <Input id="defaultWeekdayPrice" name="defaultWeekdayPrice" type="number" min={0} defaultValue={50000} required />
@@ -167,7 +180,7 @@ export default function NewFacilityPage() {
                     </fieldset>
 
                     <div className="manager-field">
-                        대표 이미지
+                        경기장 이미지
                         <div className="facility-image-upload">
                             <label className="facility-image-add">
                                 <input
@@ -192,20 +205,11 @@ export default function NewFacilityPage() {
                                 </div>
                             ))}
                         </div>
-                        <small>JPG·PNG 이미지를 업로드하면 대표 이미지로 사용됩니다.</small>
-                    </div>
-
-                    <div className="flow-grid">
-                        <Field label="슬롯 공개 시각" htmlFor="slotOpenAt">
-                            <Input id="slotOpenAt" name="slotOpenAt" type="datetime-local" />
-                        </Field>
-                        <Field label="이미지 URL 직접 입력(선택)" htmlFor="imageUrl">
-                            <Input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." />
-                        </Field>
+                        <small>JPG·PNG 이미지를 여러 장 업로드할 수 있어요. 첫 번째 이미지가 대표 이미지로 사용됩니다.</small>
                     </div>
 
                     <Button type="submit" loading={saving} disabled={uploading}>
-                        경기장 등록하고 슬롯 설정하기
+                        경기장 등록하기
                     </Button>
                 </form>
             </div>

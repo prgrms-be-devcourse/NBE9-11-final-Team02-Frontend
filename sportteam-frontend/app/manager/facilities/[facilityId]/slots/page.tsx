@@ -158,7 +158,7 @@ export default function FacilitySlotsPage() {
                         </Field>
                     </div>
                     <Button type="submit" loading={saving} disabled={!facility}>
-                        예약 슬롯 생성하기
+                        슬롯 생성하기
                     </Button>
                 </form>
 
