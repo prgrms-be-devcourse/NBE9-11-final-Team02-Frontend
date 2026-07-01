@@ -326,6 +326,7 @@ function MatchActions({
     const recruiting = match.status === "RECRUITING";
     const cancellableStatus = match.status === "RECRUITING" || match.status === "CONFIRMED";
     const participantCancelClosed = isBeforeNow(match.participantCancelDeadline);
+    const participantCanLeave = recruiting && !participantCancelClosed;
     const hostCancelClosed = isBeforeNow(match.hostCancelDeadline);
     const pct = match.capacity > 0
         ? Math.min(100, Math.round((match.currentCount / match.capacity) * 100))
@@ -500,14 +501,22 @@ function MatchActions({
                         <button
                             type="button"
                             className="secondary"
-                            disabled={submitting || participantCancelClosed}
+                            disabled={submitting || !participantCanLeave}
                             onClick={() =>
                                 run(() => leaveMatch(match.matchId), "참여 취소에 실패했습니다.")
                             }
                         >
-                            {participantCancelClosed ? "참여 취소 마감" : "참여 취소 · 환불 요청"}
+                            {!recruiting
+                                ? "확정 후 참여 취소 불가"
+                                : participantCancelClosed
+                                    ? "참여 취소 마감"
+                                    : "참여 취소 · 환불 요청"}
                         </button>
-                        <p>이미 참가 확정된 매치입니다.</p>
+                        <p>
+                            {recruiting
+                                ? "모집 중이며 취소 마감 전까지만 이탈할 수 있습니다."
+                                : "매칭 확정 이후에는 경기 진행 안정성을 위해 이탈할 수 없습니다."}
+                        </p>
                     </>
                 ) : myPaymentPending ? (
                     <>
