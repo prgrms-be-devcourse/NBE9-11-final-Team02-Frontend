@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SportTeam",
+  title: "PlayOn",
   description: "스포츠 시설 예약 및 매칭 플랫폼",
 };
 
