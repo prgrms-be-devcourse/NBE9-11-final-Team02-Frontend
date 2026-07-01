@@ -40,18 +40,18 @@ function ReviewForm() {
         setError(undefined);
         try {
             await submitReview(matchId, user.userId, {
-                facilityReview: facilityRating != null ? { rating: facilityRating, comment } : undefined,
+                facilityReview: facilityRating != null ? { rating: facilityRating, comment } : null,
                 participantReviews: people
                     .map((person) => {
                         const r = ratings[person.userId];
-                        if (r?.manner == null && r?.skill == null) return null;
+                        if (r?.manner == null || r?.skill == null) return null;
                         return {
                             revieweeId: person.userId,
-                            mannerRating: r?.manner ?? undefined,
-                            skillRating: r?.skill ?? undefined,
+                            mannerRating: r.manner,
+                            skillRating: r.skill,
                         };
                     })
-                    .filter(Boolean),
+                    .filter((v): v is { revieweeId: string; mannerRating: number; skillRating: number } => v !== null),
             });
             router.replace("/mypage/matches");
         } catch (e) {

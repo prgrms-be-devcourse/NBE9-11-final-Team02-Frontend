@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Button, FormError, Select } from "@/components/ui";
 import { getSportStats, registerSportStats } from "@/lib/sport-stat";
-import type { SelfReportedLevel, SportType } from "@/lib/types";
+import type { SelfReportedLevel, SportStatResponse, SportType } from "@/lib/types";
 
 const SPORT_LABEL: Record<SportType,string> = { FUTSAL:"풋살", SOCCER:"축구", BASKETBALL:"농구", TENNIS:"테니스", BADMINTON:"배드민턴" };
 const LEVEL_LABEL: Record<SelfReportedLevel,string> = { BEGINNER:"하 · 입문", INTERMEDIATE:"중 · 중급", ADVANCED:"상 · 숙련" };
