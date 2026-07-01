@@ -28,13 +28,12 @@ export function getAvailableFacilities(
 
     return apiFetch<PageResponse<FacilityAvailableResponse>>(
         `/api/v1/facilities/available?${query.toString()}`,
-        { auth: true },
     );
 }
 
 /** 시설 상세 조회 */
 export function getFacility(facilityId: string): Promise<FacilityResponse> {
-    return apiFetch<FacilityResponse>(`/api/v1/facilities/${facilityId}`, { auth: true });
+    return apiFetch<FacilityResponse>(`/api/v1/facilities/${facilityId}`);
 }
 
 /** 날짜별 예약 가능 슬롯 조회 */
@@ -45,6 +44,5 @@ export function getFacilitySlots(
     const query = new URLSearchParams({ date });
     return apiFetch<FacilitySlotResponse[]>(
         `/api/v1/facilities/${facilityId}/slots?${query.toString()}`,
-        { auth: true },
     );
 }

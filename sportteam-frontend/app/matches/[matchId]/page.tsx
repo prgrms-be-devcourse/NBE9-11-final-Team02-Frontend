@@ -59,12 +59,13 @@ export default function MatchDetailPage() {
     const [error, setError] = useState<string>();
 
     const load = useCallback(async () => {
-        const [detail, parts] = await Promise.all([
+        const [detailResult, partsResult] = await Promise.allSettled([
             getMatch(matchId),
             getMatchParticipants(matchId),
         ]);
-        setMatch(detail);
-        setParticipants(parts);
+        if (detailResult.status === "rejected") throw detailResult.reason;
+        setMatch(detailResult.value);
+        setParticipants(partsResult.status === "fulfilled" ? partsResult.value : []);
     }, [matchId]);
 
     useEffect(() => {

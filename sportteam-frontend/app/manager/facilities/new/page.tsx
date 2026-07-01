@@ -5,20 +5,12 @@ import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
-
-const SLOT_DURATIONS = [30, 60, 90, 120, 150, 180, 210, 240];
-
-function slotDurationLabel(minutes: number) {
-    if (minutes < 60) return `${minutes}분`;
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return rest === 0 ? `${hours}시간` : `${hours}시간 ${rest}분`;
-}
 import { AddressSearchInput } from "@/components/address-search-input";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
 import { createFacility } from "@/lib/manager-facility";
 import { uploadImage } from "@/lib/s3";
+import { SLOT_DURATIONS, slotDurationLabel } from "@/lib/facility-slot-options";
 import type { Amenity, SportType } from "@/lib/types";
 
 const SPORTS: Array<[SportType, string]> = [

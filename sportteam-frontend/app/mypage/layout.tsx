@@ -1,5 +1,5 @@
-import { RequireAuth } from "@/components/require-auth";
+import { RequireRole } from "@/components/require-role";
 
 export default function MyPageLayout({ children }: { children: React.ReactNode }) {
-  return <RequireAuth>{children}</RequireAuth>;
+  return <RequireRole role="USER">{children}</RequireRole>;
 }

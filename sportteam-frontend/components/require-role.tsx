@@ -12,7 +12,13 @@ export function RequireRole({ role, children }: { role: UserRole; children: Reac
     useEffect(() => {
         if (loading) return;
         if (!user) router.replace("/login");
-        else if (user.role !== role) router.replace(user.role === "MANAGER" ? "/manager/facilities" : "/mypage");
+        else if (user.role !== role) {
+            const fallback =
+                user.role === "MANAGER" ? "/manager/facilities" :
+                user.role === "ADMIN" ? "/admin" :
+                "/mypage";
+            router.replace(fallback);
+        }
     }, [loading, role, router, user]);
 
     if (loading || !user || user.role !== role) {

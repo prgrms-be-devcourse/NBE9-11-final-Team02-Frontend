@@ -244,12 +244,18 @@ function MatchCard({
 
             {expanded ? <MatchPaymentDetail matchId={match.matchId} /> : null}
             {match.myMatchStatus === "COMPLETED" ? (
-                <Link
-                    href={`/matches/${match.matchId}/review`}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 12, padding: "10px", border: "1px solid #bfe2cd", borderRadius: 7, background: "#e8f5ed", fontSize: 12, fontWeight: 800, color: "var(--green)" }}
-                >
-                    리뷰 작성하기
-                </Link>
+                match.reviewed ? (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 12, padding: "10px", border: "1px solid var(--line)", borderRadius: 7, background: "var(--surface)", fontSize: 12, fontWeight: 800, color: "var(--muted)" }}>
+                        리뷰 완료
+                    </div>
+                ) : (
+                    <Link
+                        href={`/matches/${match.matchId}/review`}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 12, padding: "10px", border: "1px solid #bfe2cd", borderRadius: 7, background: "#e8f5ed", fontSize: 12, fontWeight: 800, color: "var(--green)" }}
+                    >
+                        리뷰 작성하기
+                    </Link>
+                )
             ) : null}
         </div>
     );
@@ -270,7 +276,12 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
             .then((res) => { if (active) setPayment(res); })
             .catch((err) => {
                 if (!active) return;
-                setError(err instanceof ApiError ? err.message : "결제 내역을 불러오지 못했습니다.");
+                // MYPAGE_001/002: 결제 레코드 미존재 (시더 미생성 등) → 에러가 아닌 안내 메시지
+                if (err instanceof ApiError && (err.code === "MYPAGE_001" || err.code === "MYPAGE_002")) {
+                    setPayment(undefined);
+                } else {
+                    setError(err instanceof ApiError ? err.message : "결제 내역을 불러오지 못했습니다.");
+                }
             })
             .finally(() => { if (active) setLoading(false); });
 
@@ -278,7 +289,8 @@ function MatchPaymentDetail({ matchId }: { matchId: string }) {
     }, [matchId]);
 
     if (loading) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--muted)" }}>결제 내역 불러오는 중…</p>;
-    if (error || !payment) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--coral)" }}>{error ?? "결제 내역이 없습니다."}</p>;
+    if (error) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--coral)" }}>{error}</p>;
+    if (!payment) return <p style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14, fontSize: 12, color: "var(--muted)" }}>결제 내역이 없습니다.</p>;
 
     return (
         <div className="manager-readonly" style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SlotCalendar } from "@/components/slot-calendar";
 import { getFacility, getFacilitySlots } from "@/lib/facility";
 import { ApiError } from "@/lib/http";
 import { getFacilityReviews } from "@/lib/review";
@@ -220,27 +221,19 @@ function SlotBrowser({ facilityId, sportType }: { facilityId: string; sportType:
 
     return (
         <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-zinc-900">예약 가능 시간</h2>
-                <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
-                />
-            </div>
+            <h2 className="mb-4 text-lg font-semibold text-zinc-900">예약 가능 시간</h2>
 
-            {loading ? (
-                <p className="py-8 text-center text-sm text-zinc-400">불러오는 중…</p>
-            ) : error ? (
-                <p className="py-8 text-center text-sm text-red-600">{error}</p>
-            ) : !slots || slots.length === 0 ? (
-                <p className="py-8 text-center text-sm text-zinc-400">
-                    해당 날짜에 등록된 시간이 없습니다.
-                </p>
-            ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {slots.map((slot) => {
+            <SlotCalendar selectedDate={date} onSelectDate={setDate} minDate={todayString()} listTitle="시간 선택">
+                {loading ? (
+                    <p className="py-8 text-center text-sm text-zinc-400">불러오는 중…</p>
+                ) : error ? (
+                    <p className="py-8 text-center text-sm text-red-600">{error}</p>
+                ) : !slots || slots.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-zinc-400">
+                        해당 날짜에 등록된 시간이 없습니다.
+                    </p>
+                ) : (
+                    slots.map((slot) => {
                         const startAt = parseSlotStartAt(slot.slotDate, slot.startTime);
                         const recruitClosed = startAt ? isBeforeNow(calculateRecruitDeadline(startAt)) : true;
                         const disabled = slot.status !== "AVAILABLE" || recruitClosed || authLoading;
@@ -267,24 +260,20 @@ function SlotBrowser({ facilityId, sportType }: { facilityId: string; sportType:
                                     });
                                     router.push(`/matches/new?${query}`);
                                 }}
-                                className={
-                                    !disabled
-                                        ? "rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-sm transition hover:border-emerald-500 hover:bg-emerald-50"
-                                        : "cursor-not-allowed rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-left text-sm opacity-50"
-                                }
+                                className="slot-calendar-list-item"
                             >
-                                <p className="font-medium text-zinc-900">
-                                    {slot.startTime.slice(0, 5)} ~ {slot.endTime.slice(0, 5)}
-                                </p>
-                                <p className="text-zinc-500">{slot.price.toLocaleString()}원</p>
-                                <p className="text-xs text-zinc-400">
-                                    {recruitClosed && slot.status === "AVAILABLE" ? "모집 마감" : SLOT_STATUS_LABEL[slot.status]}
-                                </p>
+                                <span>
+                                    <b>{slot.startTime.slice(0, 5)} ~ {slot.endTime.slice(0, 5)}</b>
+                                    <span>
+                                        {recruitClosed && slot.status === "AVAILABLE" ? "모집 마감" : SLOT_STATUS_LABEL[slot.status]}
+                                    </span>
+                                </span>
+                                <strong>{slot.price.toLocaleString()}원</strong>
                             </button>
                         );
-                    })}
-                </div>
-            )}
+                    })
+                )}
+            </SlotCalendar>
         </div>
     );
 }
