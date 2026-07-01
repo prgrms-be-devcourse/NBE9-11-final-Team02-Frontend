@@ -12,11 +12,3 @@ export function registerSportStats(stats: Array<{ sportType: SportType; selfRepo
         body: { stats },
     });
 }
-
-export function updateSportStat(sportType: SportType, selfReportedLevel: SelfReportedLevel) {
-    return apiFetch<void>(`/api/v1/users/me/sport-stats/${sportType}`, {
-        method: "PATCH",
-        auth: true,
-        body: { selfReportedLevel },
-    });
-}
