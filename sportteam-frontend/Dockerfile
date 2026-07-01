@@ -24,6 +24,11 @@ COPY . .
 # 텔레메트리 비활성화 (빌드 로그 정리 및 외부 전송 방지)
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Toss 결제창에서 사용하는 공개 클라이언트 키
+# NEXT_PUBLIC_* 값은 Next.js 클라이언트 번들에 빌드 시점에 주입된다.
+ARG NEXT_PUBLIC_TOSS_CLIENT_KEY
+ENV NEXT_PUBLIC_TOSS_CLIENT_KEY=${NEXT_PUBLIC_TOSS_CLIENT_KEY}
+
 # next.config.ts의 output: "standalone" 설정으로 .next/standalone 생성
 RUN npm run build
 
