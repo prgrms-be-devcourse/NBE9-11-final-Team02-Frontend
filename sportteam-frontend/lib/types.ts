@@ -231,6 +231,7 @@ export interface MyMatchResponse {
     matchDate: string;
     startTime: string;
     endTime: string;
+    reviewed: boolean;
 }
 
 export interface MatchPaymentHostDetail {

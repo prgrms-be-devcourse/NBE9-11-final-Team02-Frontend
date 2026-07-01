@@ -4,16 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError, Input, Select } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/http";
-import { getFacility } from "@/lib/facility";
 import {
     deleteFacility,
     deleteFacilityImage,
+    getManagerFacility,
     updateFacility,
 } from "@/lib/manager-facility";
 import { uploadImage } from "@/lib/s3";
+import { SLOT_DURATIONS, slotDurationLabel } from "@/lib/facility-slot-options";
 import type {
     Amenity,
     FacilityResponse,
@@ -55,12 +56,13 @@ export default function EditFacilityPage() {
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
+        if (!user) return;
         let active = true;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(true);
         setError(undefined);
 
-        getFacility(facilityId)
+        getManagerFacility(user.userId, facilityId)
             .then((res) => {
                 if (!active) return;
                 setFacility(res);
@@ -82,7 +84,7 @@ export default function EditFacilityPage() {
         return () => {
             active = false;
         };
-    }, [facilityId]);
+    }, [facilityId, user]);
 
     async function handleFiles(event: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(event.target.files ?? []);
@@ -133,7 +135,7 @@ export default function EditFacilityPage() {
             slotDurationMinutes: Number(data.get("slotDurationMinutes")),
             defaultWeekdayPrice: Number(data.get("defaultWeekdayPrice")),
             defaultWeekendPrice: Number(data.get("defaultWeekendPrice")),
-            slotOpenAt: data.get("slotOpenAt") ? String(data.get("slotOpenAt")) : null,
+            slotOpenAt: null,
             sportTypes: data.getAll("sportTypes") as SportType[],
             amenities: data.getAll("amenities") as Amenity[],
             imageUrls: images.map((i) => i.url),
@@ -195,10 +197,6 @@ export default function EditFacilityPage() {
 
     if (!facility) return null;
 
-    const slotOpenDefault = facility.slotOpenAt
-        ? facility.slotOpenAt.slice(0, 16)
-        : "";
-
     return (
         <main className="manager-page">
             <div className="manager-form-shell">
@@ -246,8 +244,14 @@ export default function EditFacilityPage() {
                         <Field label="수용 인원" htmlFor="capacity">
                             <Input id="capacity" name="capacity" type="number" min={1} defaultValue={facility.capacity} required />
                         </Field>
-                        <Field label="슬롯 단위(분)" htmlFor="slotDurationMinutes">
-                            <Input id="slotDurationMinutes" name="slotDurationMinutes" type="number" min={30} step={30} defaultValue={facility.slotDurationMinutes} required />
+                        <Field label="슬롯 단위" htmlFor="slotDurationMinutes">
+                            <Select id="slotDurationMinutes" name="slotDurationMinutes" defaultValue={facility.slotDurationMinutes} required>
+                                {SLOT_DURATIONS.map((minutes) => (
+                                    <option key={minutes} value={minutes}>
+                                        {slotDurationLabel(minutes)}
+                                    </option>
+                                ))}
+                            </Select>
                         </Field>
                         <Field label="평일 기본 요금" htmlFor="defaultWeekdayPrice">
                             <Input id="defaultWeekdayPrice" name="defaultWeekdayPrice" type="number" min={0} defaultValue={facility.defaultWeekdayPrice} required />
@@ -255,6 +259,7 @@ export default function EditFacilityPage() {
                         <Field label="주말 기본 요금" htmlFor="defaultWeekendPrice">
                             <Input id="defaultWeekendPrice" name="defaultWeekendPrice" type="number" min={0} defaultValue={facility.defaultWeekendPrice} required />
                         </Field>
+                        <p className="text-sm text-muted-foreground">기본 요금 수정 시, 예약 전인 기존 슬롯에 가격 변동이 반영됩니다.</p>
                     </div>
 
                     <fieldset className="manager-checks">
@@ -288,7 +293,7 @@ export default function EditFacilityPage() {
                     </fieldset>
 
                     <div className="manager-field">
-                        대표 이미지
+                        경기장 이미지
                         <div className="facility-image-upload">
                             <label className="facility-image-add">
                                 <input
@@ -315,10 +320,6 @@ export default function EditFacilityPage() {
                         </div>
                         <small>이미지를 추가하거나 × 버튼으로 삭제할 수 있습니다.</small>
                     </div>
-
-                    <Field label="슬롯 공개 시각" htmlFor="slotOpenAt">
-                        <Input id="slotOpenAt" name="slotOpenAt" type="datetime-local" defaultValue={slotOpenDefault} />
-                    </Field>
 
                     <Button type="submit" loading={saving} disabled={uploading}>
                         변경 사항 저장

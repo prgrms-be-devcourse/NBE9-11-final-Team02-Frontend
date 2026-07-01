@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { Button, Field, FormError, Input } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
-import { getFacilityReservations, updateFacilitySlot } from "@/lib/manager-facility";
-import type { FacilityReservationOverviewResponse, FacilityReservationSlotResponse, ReservationStatus, SlotStatus } from "@/lib/types";
+import { getFacilityReservations } from "@/lib/manager-facility";
+import type { FacilityReservationOverviewResponse, ReservationStatus, SlotStatus } from "@/lib/types";
 
 const SLOT_STATUS_LABEL: Record<SlotStatus, string> = {
     AVAILABLE: "예약 가능",
@@ -33,10 +33,6 @@ function money(value: number) {
     return new Intl.NumberFormat("ko-KR").format(value);
 }
 
-function isEditableSlot(slot: FacilityReservationSlotResponse) {
-    return slot.slotStatus === "AVAILABLE" || slot.slotStatus === "CLOSED";
-}
-
 export default function ManagerFacilityReservationsPage() {
     const { facilityId } = useParams<{ facilityId: string }>();
     const { user } = useAuth();
@@ -45,9 +41,6 @@ export default function ManagerFacilityReservationsPage() {
     const [overview, setOverview] = useState<FacilityReservationOverviewResponse>();
     const [error, setError] = useState<string>();
     const [loading, setLoading] = useState(true);
-    const [editingSlotId, setEditingSlotId] = useState<string>();
-    const [savingSlotId, setSavingSlotId] = useState<string>();
-    const [successMessage, setSuccessMessage] = useState<string>();
 
     async function load(nextFromDate = fromDate, nextToDate = toDate) {
         if (!user) return;
@@ -84,30 +77,7 @@ export default function ManagerFacilityReservationsPage() {
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setSuccessMessage(undefined);
         void load(fromDate, toDate);
-    }
-
-    async function submitSlot(event: FormEvent<HTMLFormElement>, slotId: string) {
-        event.preventDefault();
-        if (!user) return;
-        const data = new FormData(event.currentTarget);
-        setSavingSlotId(slotId);
-        setError(undefined);
-        setSuccessMessage(undefined);
-        try {
-            await updateFacilitySlot(user.userId, facilityId, slotId, {
-                price: Number(data.get("price")),
-                status: String(data.get("status")) as "AVAILABLE" | "CLOSED",
-            });
-            setEditingSlotId(undefined);
-            setSuccessMessage("슬롯 정보가 수정되었습니다.");
-            await load(fromDate, toDate);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "슬롯 정보를 수정하지 못했습니다.");
-        } finally {
-            setSavingSlotId(undefined);
-        }
     }
 
     return (
@@ -134,7 +104,6 @@ export default function ManagerFacilityReservationsPage() {
                 </form>
 
                 <FormError message={error} />
-                {successMessage ? <p className="manager-success">{successMessage}</p> : null}
 
                 {!overview && loading ? (
                     <div className="auth-loading"><span className="auth-spinner" /></div>
@@ -156,11 +125,8 @@ export default function ManagerFacilityReservationsPage() {
                             </div>
                         ) : (
                             <section className="reservation-table">
-                                {overview.slots.map((slot) => {
-                                    const editable = isEditableSlot(slot);
-                                    const editing = editingSlotId === slot.slotId;
-                                    return (
-                                    <article key={slot.slotId} className={editing ? "editing" : undefined}>
+                                {overview.slots.map((slot) => (
+                                    <article key={slot.slotId}>
                                         <div>
                                             <b>{slot.slotDate}</b>
                                             <span>{slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}</span>
@@ -175,29 +141,9 @@ export default function ManagerFacilityReservationsPage() {
                                                 <small>예약 없음</small>
                                             )}
                                         </div>
-                                        <div className="reservation-slot-actions">
-                                            <strong>{money(slot.revenue || slot.price)}원</strong>
-                                            <button type="button" disabled={!editable} onClick={() => setEditingSlotId(editing ? undefined : slot.slotId)}>
-                                                {editable ? (editing ? "닫기" : "수정") : "수정 불가"}
-                                            </button>
-                                        </div>
-                                        {editing ? (
-                                            <form className="slot-edit-form" onSubmit={(event) => submitSlot(event, slot.slotId)}>
-                                                <Field label="슬롯 요금" htmlFor={`price-${slot.slotId}`}>
-                                                    <Input id={`price-${slot.slotId}`} name="price" type="number" min={0} defaultValue={slot.price} required />
-                                                </Field>
-                                                <Field label="슬롯 상태" htmlFor={`status-${slot.slotId}`}>
-                                                    <Select id={`status-${slot.slotId}`} name="status" defaultValue={slot.slotStatus === "CLOSED" ? "CLOSED" : "AVAILABLE"} required>
-                                                        <option value="AVAILABLE">예약 가능</option>
-                                                        <option value="CLOSED">마감</option>
-                                                    </Select>
-                                                </Field>
-                                                <Button type="submit" loading={savingSlotId === slot.slotId}>저장하기</Button>
-                                            </form>
-                                        ) : null}
+                                        <strong>{money(slot.revenue || slot.price)}원</strong>
                                     </article>
-                                    );
-                                })}
+                                ))}
                             </section>
                         )}
                     </>

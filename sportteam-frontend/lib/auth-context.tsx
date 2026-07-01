@@ -13,7 +13,7 @@ import {
     login as loginApi,
     logout as logoutApi,
 } from "./auth";
-import { getAccessToken } from "./token";
+import { clearAccessToken, getAccessToken } from "./token";
 import type { LoginRequest, UserProfile } from "./types";
 
 interface AuthContextValue {
@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(await getMyProfile());
         } catch {
             // 토큰 만료/무효 → 로그아웃 상태로 처리
+            clearAccessToken();
             setUser(null);
         }
     }, []);

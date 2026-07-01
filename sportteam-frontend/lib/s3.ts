@@ -1,10 +1,11 @@
 import { apiFetch } from "./http";
 import type { PresignedUrlResponse } from "./types";
 
-/** GET /api/v1/s3/presigned-url — 업로드용 presigned URL 발급. 공개 */
+/** GET /api/v1/s3/presigned-url — 업로드용 presigned URL 발급. 인증 필요(매니저만 업로드) */
 export function getPresignedUrl(contentType: string) {
     return apiFetch<PresignedUrlResponse>(
         `/api/v1/s3/presigned-url?contentType=${encodeURIComponent(contentType)}`,
+        { auth: true },
     );
 }
 

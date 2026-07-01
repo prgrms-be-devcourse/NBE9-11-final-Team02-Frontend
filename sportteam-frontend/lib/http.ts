@@ -1,5 +1,5 @@
 import type { ApiResponse } from "./types";
-import { getAccessToken } from "./token";
+import { clearAccessToken, getAccessToken } from "./token";
 
 export const API_BASE_URL =
     typeof window === "undefined"
@@ -71,6 +71,10 @@ export async function apiFetch<T>(
     const payload = text ? (JSON.parse(text) as ApiResponse<T>) : null;
 
     if (!res.ok || (payload && payload.success === false)) {
+        // 401: 토큰 만료/미인증 → 즉시 제거 (403은 정상 권한 없음과 구분)
+        if (res.status === 401) {
+            clearAccessToken();
+        }
         const error = payload?.error;
         throw new ApiError(
             error?.message ?? "요청 처리 중 오류가 발생했습니다.",
