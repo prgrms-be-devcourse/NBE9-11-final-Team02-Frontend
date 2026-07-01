@@ -28,20 +28,18 @@ function CheckoutSuccess() {
     const orderId = search.get("orderId") ?? "";
     const amount = Number(search.get("amount") ?? 0);
     const matchId = search.get("matchId") ?? "";
+    const invalidPaymentMessage = !paymentKey || !orderId || !amount || !matchId
+        ? "결제 승인 정보가 올바르지 않습니다."
+        : undefined;
 
     useEffect(() => {
-        if (!user) return;
-        if (!paymentKey || !orderId || !amount || !matchId) {
-            setError("결제 승인 정보가 올바르지 않습니다.");
-            return;
-        }
+        if (!user || invalidPaymentMessage) return;
 
         let active = true;
         confirmPayment({
             paymentKey,
             orderId,
             amount,
-            userId: user.userId,
         })
             .then(() => {
                 if (active) router.replace(`/matches/${matchId}?payment=success`);
@@ -53,14 +51,16 @@ function CheckoutSuccess() {
         return () => {
             active = false;
         };
-    }, [amount, matchId, orderId, paymentKey, router, user]);
+    }, [amount, invalidPaymentMessage, matchId, orderId, paymentKey, router, user]);
 
-    if (error) {
+    const displayError = error ?? invalidPaymentMessage;
+
+    if (displayError) {
         return (
             <main className="flow-page">
                 <div className="flow-shell empty-flow">
                     <h1>결제 승인에 실패했습니다.</h1>
-                    <FormError message={error} />
+                    <FormError message={displayError} />
                     <Link href={matchId ? `/matches/${matchId}` : "/matches"}>매치로 돌아가기</Link>
                 </div>
             </main>

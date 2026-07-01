@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { RequireAuth } from "@/components/require-auth";
 import { Button, FormError } from "@/components/ui";
@@ -22,7 +22,6 @@ export default function MatchCheckoutPage() {
 
 function MatchCheckout() {
     const search = useSearchParams();
-    const router = useRouter();
     const { user } = useAuth();
     const matchId = search.get("matchId") ?? "";
     const title = search.get("title") ?? "매치 참가";
@@ -38,7 +37,6 @@ function MatchCheckout() {
             const prepared = await prepareParticipationPayment({
                 matchId,
                 amount,
-                userId: user.userId,
             });
 
             if (!TOSS_CLIENT_KEY) {
